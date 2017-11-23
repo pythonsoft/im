@@ -28,11 +28,11 @@ log4js.configure({
       pattern: '-yyyy-MM-dd.log',
       alwaysIncludePattern: true,
       category: 'error',
-    }
+    },
   },
   categories: {
-    default: { appenders: [ 'console', 'access', 'error' ], level: 'debug' }
-  }
+    default: { appenders: ['console', 'access', 'error'], level: 'debug' },
+  },
 });
 
 const loggerCreator = function loggerCreator(name) {

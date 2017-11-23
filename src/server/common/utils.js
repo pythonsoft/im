@@ -67,7 +67,7 @@ utils.softMerge = function merge(source, target) {
  * @returns []
  */
 utils.hardMerge = function hardMerge(arr, arr2) {
-  const arr1 = arr.slice();    // clone arr
+  const arr1 = arr.slice(); // clone arr
   for (let j = 0; j < arr2.length; j++) {
     const index = arr1.indexOf(arr2[j]);
     if (index !== -1) {

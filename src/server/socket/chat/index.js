@@ -17,11 +17,11 @@ class ChatIO {
       utils.console('connection.socket.id', socket.id);
       utils.console('connection.info', socket.info);
 
-      const userId= socket.info.userId;
+      const userId = socket.info.userId;
 
-      //确保当前连接放到登录用户的房间内
+      // 确保当前连接放到登录用户的房间内
       helper.ensureInRoom(chatIO, socket, userId, () => {
-        for(let k in service) {
+        for (const k in service) {
           socket.on(k, (q) => {
             service[k](socket, q);
           });
@@ -37,12 +37,9 @@ class ChatIO {
           utils.console(`disconnect with client :${socket.id}`);
           // helper.logout(chatIO, socket);
         });
-
       });
-
     });
   }
-
 }
 
 module.exports = ChatIO;

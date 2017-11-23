@@ -48,7 +48,7 @@ service.add = function (info, ownerId, cb) {
     photo: '',
     type: '',
     fromWhere: '',
-    details: {}
+    details: {},
   }, info);
 
   const t = new Date();

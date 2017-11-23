@@ -46,11 +46,11 @@ class Xml2Srt {
     if (isStream(input)) {
       let data = '';
       input
-      .on('data', (chunk) => {
-        data += chunk;
-      })
-      .on('error', err => cb && cb(err))
-      .on('end', () => cb && cb(null, data));
+        .on('data', (chunk) => {
+          data += chunk;
+        })
+        .on('error', err => cb && cb(err))
+        .on('end', () => cb && cb(null, data));
     } else if (typeof input === 'string') {
       return cb && cb(null, input);
     } else {
