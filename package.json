@@ -1,0 +1,44 @@
+{
+  "name": "im",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "cross-env NODE_ENV=online node src/build.js",
+    "dev": "cross-env NODE_ENV=development node src/build.js && cross-env NODE_ENV=development node src/server/reloadServer.js",
+    "update": "npm install --registry=https://registry.npm.taobao.org",
+    "lint": "./node_modules/.bin/eslint --ignore-path .gitignore src/server",
+    "lint:fix": "./node_modules/.bin/eslint --fix --ignore-path .gitignore src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.szdev.cn:chaoningx/im.git"
+  },
+  "author": "chaoningx@phoenixtv.com",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "compression": "^1.7.1",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "cross-env": "^5.1.1",
+    "del": "^3.0.0",
+    "express": "^4.16.2",
+    "gulp": "^3.9.1",
+    "i18next": "^10.1.0",
+    "i18next-express-middleware": "^1.0.7",
+    "i18next-node-fs-backend": "^1.0.0",
+    "log4js": "^2.3.12",
+    "mongodb": "^2.2.33",
+    "redis": "^2.8.0",
+    "redis-streams": "^1.1.0",
+    "request": "^2.83.0",
+    "socket.io": "^2.0.4",
+    "socket.io-redis": "^5.2.0",
+    "socket.io-stream": "^0.9.1",
+    "swagger-jsdoc": "^1.9.7",
+    "swagger-ui-express": "^2.0.11",
+    "uuid": "^3.1.0",
+    "webpack": "^3.8.1"
+  }
+}

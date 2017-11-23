@@ -1,0 +1,38 @@
+{
+    "env": {
+        "mocha": true,
+        "browser": true,
+        "node": true,
+        "es6": true,
+        "mongo": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:promise/recommended",
+        "airbnb-base"
+    ],
+    "plugins": [
+        "import",
+        "promise"
+    ],
+    "rules": {
+        "no-console": "off",
+        "no-plusplus": "off",
+        "no-shadow": "off",
+        "global-require": "off",
+        "consistent-return": "off",
+        "no-restricted-syntax": "off",
+        "no-continue": "off",
+        "no-underscore-dangle": "off",
+        "no-param-reassign": "off",
+        "no-bitwise": "off",
+        "guard-for-in": "off",
+        "no-useless-escape": "off",
+        "class-methods-use-this": "off",
+        "max-len": "off",
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": ["**/*.test.js", "**/test.js", "**/*.spec.js"]}]
+    },
+    "parserOptions": {
+        "sourceType": "script"
+    }
+}
