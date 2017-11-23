@@ -68,7 +68,7 @@ login.middleware = function middleware(req, res, next) {
 login.webSocketMiddleware = function (socket) {
   const authorize = socket.request.headers[`im-${TICKET_COOKIE_NAME}`] || utils.formatCookies(socket.request.headers.cookie)[TICKET_COOKIE_NAME];
   let secret = socket.request.headers['im-secret'] || '0';
-  let key = socket.request.headers['im-key'] || 'yunXiang';
+  let key = socket.request.headers['im-key'] || socket.handshake.query['im-key'] || 'yunXiang';
 
   if (!key) {
     return result.fail(i18n.t('imAuthorizeInvalid'));
@@ -82,7 +82,7 @@ login.webSocketMiddleware = function (socket) {
 
   if (authorize) {
     try {
-      const dec = utils.decipher(authorize, key);
+      const dec = utils.decipher(authorize, secretKey);
       const codes = dec.split(',');
       const userId = codes[0];
       const expireDate = codes[1];
