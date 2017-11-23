@@ -9,7 +9,7 @@
 ```
 
 2、消息接口对接
-```javascript 1.6
+```
 
 1、均使用websocket方式对接
 2、websocket头部中须添加'im-key'相关值，如为快传帐户系统可以不用设置，默认值为:'yunXiang'
