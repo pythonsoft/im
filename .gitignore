@@ -4,3 +4,4 @@ build/
 src/logs/
 uploads/
 .idea/
+npm-debug.log
