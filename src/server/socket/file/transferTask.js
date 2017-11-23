@@ -205,7 +205,6 @@ class TransferTask {
 
     this.childTaskStatus[id] = st;
   }
-
 }
 
 module.exports = TransferTask;

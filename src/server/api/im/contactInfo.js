@@ -16,7 +16,7 @@ class ContactInfo extends DB {
     this.struct = {
       _id: { type: 'string', validation: 'require', default() { return uuid.v1(); } },
       targetId: { type: 'string', validation: 'require' }, // 如为人，则为人的ID，如果为群，那为sessionId
-      targetName: { type: 'string', validation: 'require' }, //好友的名称，群的名称
+      targetName: { type: 'string', validation: 'require' }, // 好友的名称，群的名称
       photo: { type: 'string' },
       type: { type: 'string',
         allowUpdate: false,

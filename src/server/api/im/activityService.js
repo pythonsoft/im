@@ -9,24 +9,24 @@ const activityInfo = new ActivityInfo();
 const service = {};
 
 service.setSeq = function (ownerId, sessionId, seq, cb) {
-  if(!ownerId) {
+  if (!ownerId) {
     return cb && cb(i18n.t('imActivityFieldsIsNull', { field: 'ownerId' }));
   }
 
-  if(!sessionId || sessionId.length !== 36) {
+  if (!sessionId || sessionId.length !== 36) {
     return cb && cb(i18n.t('imActivityFieldsIsNull', { field: 'sessionId' }));
   }
 
   const seqNum = seq * 1;
 
-  if(typeof seqNum !== 'number') {
+  if (typeof seqNum !== 'number') {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'seq' }));
   }
 
   activityInfo.collection.updateOne({
     _id: sessionId,
-    ownerId: ownerId,
-    seq: { $lte: seqNum  }
+    ownerId,
+    seq: { $lte: seqNum },
   }, { seq: seqNum }, { upsert: true }, (err, r) => {
     if (err) {
       logger.error(err.message);
@@ -35,15 +35,14 @@ service.setSeq = function (ownerId, sessionId, seq, cb) {
 
     return cb && cb(null, r);
   });
-
 };
 
 service.getActivity = function (ownerId, sessionId, cb) {
-  if(!ownerId) {
+  if (!ownerId) {
     return cb && cb(i18n.t('imActivityFieldsIsNull', { field: 'ownerId' }));
   }
 
-  if(!sessionId || sessionId.length !== 36) {
+  if (!sessionId || sessionId.length !== 36) {
     return cb && cb(i18n.t('imActivityFieldsIsNull', { field: 'sessionId' }));
   }
 
@@ -53,7 +52,7 @@ service.getActivity = function (ownerId, sessionId, cb) {
       return cb && cb(i18n.t('databaseError'));
     }
 
-    if(!doc) {
+    if (!doc) {
       return cb && cb(i18n.t('imActivityIsNotExist'));
     }
 

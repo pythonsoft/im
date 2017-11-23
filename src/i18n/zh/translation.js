@@ -1,6 +1,54 @@
 'use strict';
 
 module.exports = {
+  loginCannotFindUser: {
+    code: '-3001',
+    message: '登录时找不到用户',
+  },
+  notLogin: {
+    code: '-3002',
+    message: '用户没有登录',
+  },
+  loginExpired: {
+    code: '-3003',
+    message: '登录已过期',
+  },
+  loginCannotGetUserInfo: {
+    code: '-3004',
+    message: '登录找不到用户信息',
+  },
+  needReLogin: {
+    code: '-3005',
+    message: '需要重新登录',
+  },
+  noAccess: {
+    code: '-4001',
+    message: '无权访问此接口',
+  },
+  databaseError: {
+    code: '-1',
+    message: '数据库异常.',
+  },
+  databaseErrorDetail: {
+    code: '-2',
+    message: '{{error}}',
+  },
+  typeError: {
+    code: '-10001',
+    message: '{{field}} 输入类型错误',
+  },
+  requireError: {
+    code: '-10002',
+    message: '必须填写 {{field}}',
+  },
+  validationError: {
+    code: '-10003',
+    message: '{{field}} 不符合验证规则',
+  },
+  fieldIsNotExistError: {
+    code: '-10004',
+    message: '{{field}} 字段不在实体类中，无法进行存取操作',
+  },
   imSessionFieldsIsNull: {
     code: '-160001',
     message: '会话参数 {{field}} 为空',
@@ -76,5 +124,5 @@ module.exports = {
   imUserIsExist: {
     code: '-160019',
     message: '用户已存在',
-  }
+  },
 };

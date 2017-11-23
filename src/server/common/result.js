@@ -29,7 +29,7 @@ const build = function build(code, data, message = null, cid) {
 
   const rs = { status: code, data, statusInfo: { message } };
 
-  if(cid) {
+  if (cid) {
     rs.cid = cid;
   }
 

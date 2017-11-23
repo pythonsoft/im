@@ -22,39 +22,39 @@ service.add = function (info, cb) {
     sessionId: '',
     type: '',
     content: '',
-    details: {}
+    details: {},
   }, info);
 
   info._id = uuid.v1();
   info.createTime = new Date();
 
-  if(!mInfo.sessionId && mInfo.sessionId !== 36) {
+  if (!mInfo.sessionId && mInfo.sessionId !== 36) {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'sessionId' }));
   }
 
-  if(typeof mInfo.content !== 'string') {
+  if (typeof mInfo.content !== 'string') {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'content' }));
   }
 
   mInfo.content = mInfo.content.trim();
 
-  if(!mInfo.content) {
+  if (!mInfo.content) {
     return cb && cb(i18n.t('imMessageContentIsNull'));
   }
 
-  if(!mInfo.content.length > 1000) {
+  if (!mInfo.content.length > 1000) {
     return cb && cb(i18n.t('imMessageContentTooLong'));
   }
 
-  if(!mInfo.from || utils.isEmptyObject(mInfo.from) || mInfo.from._id.length !== 36 || !mInfo.from || utils.isValueInObject(mInfo.from.type, ContactInfo.TYPE)) {
+  if (!mInfo.from || utils.isEmptyObject(mInfo.from) || mInfo.from._id.length !== 36 || !mInfo.from || utils.isValueInObject(mInfo.from.type, ContactInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'from' }));
   }
 
-  if(!mInfo.to || utils.isEmptyObject(mInfo.from) || mInfo.to._id.length !== 36 || !mInfo.to || utils.isValueInObject(mInfo.to.type, ContactInfo.TYPE)) {
+  if (!mInfo.to || utils.isEmptyObject(mInfo.from) || mInfo.to._id.length !== 36 || !mInfo.to || utils.isValueInObject(mInfo.to.type, ContactInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'to' }));
   }
 
-  if(utils.isValueInObject(mInfo.type, MessageInfo.TYPE)) {
+  if (utils.isValueInObject(mInfo.type, MessageInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageTypeIsNotExist'));
   }
 
@@ -66,7 +66,6 @@ service.add = function (info, cb) {
 
     return cb && cb(null, mInfo);
   });
-
 };
 
 service.list = function (sessionId, page, pageSize, fieldNeeds, cb) {
@@ -84,7 +83,7 @@ service.list = function (sessionId, page, pageSize, fieldNeeds, cb) {
   }, '-createdTime', fieldNeeds);
 };
 
-service.listBySeq = function (sessionId, seq, page=1, pageSize=10, fieldNeeds, cb) {
+service.listBySeq = function (sessionId, seq, page = 1, pageSize = 10, fieldNeeds, cb) {
   if (!sessionId) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'sessionId' }));
   }
@@ -94,12 +93,12 @@ service.listBySeq = function (sessionId, seq, page=1, pageSize=10, fieldNeeds, c
   }
 
   const q = {
-    sessionId: sessionId
+    sessionId,
   };
 
-  if(seq) {
+  if (seq) {
     q.seq = { $lte: seq };
-  };
+  }
 
   messageInfo.pagination(q, page, pageSize, (err, docs) => {
     if (err) {
@@ -109,7 +108,6 @@ service.listBySeq = function (sessionId, seq, page=1, pageSize=10, fieldNeeds, c
 
     return cb && cb(null, docs);
   }, '-createdTime', fieldNeeds);
-
 };
 
 service.getDetail = function (_id, fields, cb) {
