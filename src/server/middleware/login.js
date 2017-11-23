@@ -56,6 +56,7 @@ login.middleware = function middleware(req, res, next) {
       }
 
       next();
+
     } else { // 过期
       res.clearCookie(TICKET_COOKIE_NAME);
       return res.json(result.fail(req.t('loginExpired')));
