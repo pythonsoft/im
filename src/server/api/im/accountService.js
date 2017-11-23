@@ -9,16 +9,16 @@ const accountInfo = new AccountInfo();
 const service = {};
 
 service.syncAccount = function (id, name, photo, email, cb) {
-  if(!id || id.length !== 36) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
+  if (!id || id.length !== 36) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'id' }));
   }
 
-  if(!name) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'name' }));
+  if (!name) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
   }
 
-  if(!photo) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'photo' }));
+  if (!photo) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'photo' }));
   }
 
   accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
@@ -33,11 +33,11 @@ service.syncAccount = function (id, name, photo, email, cb) {
 
     const info = {
       _id: id,
-      name: name,
-      photo: photo,
-      email: email,
-      createdTime: new Date()
-    }
+      name,
+      photo,
+      email,
+      createdTime: new Date(),
+    };
 
     accountInfo.insertOne(info, (err, r) => {
       if (err) {
@@ -45,11 +45,9 @@ service.syncAccount = function (id, name, photo, email, cb) {
         return cb && cb(i18n.t('databaseError'));
       }
 
-      return cb && cb(nulll, r);
+      return cb && cb(null, r);
     });
-
   });
-
 };
 
 service.login = function (id, cb) {

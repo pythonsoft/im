@@ -148,8 +148,8 @@ const chaoningCoolie = function (version, cb) {
   del.sync(chaoningDeployPath, { force: true });
   fs.mkdirSync(chaoningDeployPath);
 
-  //将API文件复制到fe下的API包中
-  console.log(`build fe project start.`);
+  // 将API文件复制到fe下的API包中
+  console.log('build fe project start.');
 
   exec(`cd ${feApiPath} && cp *.js ${chaoningFEProjectApiPath} && cd ${chaoningFEprojectPath} && npm run build`, (error, stdout, stderr) => {
     if (error) {
@@ -157,7 +157,7 @@ const chaoningCoolie = function (version, cb) {
       return cb && cb(error);
     }
 
-    console.log(`build fe project success.`);
+    console.log('build fe project success.');
 
     exec(`cp -rf ${chaoningFEProjectDistPath} ${targetFe}`, (error, stdout, stderr) => {
       if (error) {

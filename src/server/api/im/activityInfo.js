@@ -16,10 +16,10 @@ class ActivityInfo extends DB {
     super(config.dbInstance[`${config.dbName}DB`], 'IM_ActivityInfo');
 
     this.struct = {
-      _id: { type: 'string', default: () => uuid.v1(), allowUpdate: false }, //使用sessionId, sessionInfo._id
+      _id: { type: 'string', default: () => uuid.v1(), allowUpdate: false }, // 使用sessionId, sessionInfo._id
       ownerId: { type: 'string', allowUpdate: false },
       sessionId: { type: 'string', validation: 'require', allowUpdate: false },
-      seq: { type: 'number', validation(v) { return typeof v === 'number'; }, default() { return 0 } },
+      seq: { type: 'number', validation(v) { return typeof v === 'number'; }, default() { return 0; } },
       createdTime: { type: 'date', allowUpdate: false },
       details: { type: 'object' },
     };

@@ -61,7 +61,6 @@ class ChatClient {
   join(roomId) {
     this.socket.emit('joinRoom', roomId);
   }
-
 }
 
 // let chatClient = new ChatClient({

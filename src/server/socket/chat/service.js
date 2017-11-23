@@ -9,12 +9,12 @@ const helper = require('./helper');
 
 const service = {};
 
-const json = function(err, r, cid) {
+const json = function (err, r, cid) {
   let rs = '';
 
-  if(err) {
+  if (err) {
     rs = errorJSON(err, cid);
-  }else {
+  } else {
     rs = successJSON(r, cid);
   }
 
@@ -29,7 +29,7 @@ const successJSON = function (doc, cid) {
   return result.success(doc, 'ok', cid);
 };
 
-//获取最近会话
+// 获取最近会话
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
@@ -39,63 +39,62 @@ service.getRecentContactList = function getRecentContactList(socket, query) {
   });
 };
 
-//添加人，群，盒子到通讯录
-service.addContact = function(socket, query) {
+// 添加人，群，盒子到通讯录
+service.addContact = function (socket, query) {
   contactService.add({
     targetId: query.targetId,
     targetName: query.targetName,
     photo: query.photo || '',
     type: query.type,
     fromWhere: query.fromWhere || 'web',
-    details: query.details || {}
+    details: query.details || {},
   }, socket.info.userId, (err, r) => {
     socket.emit('addContact', json(err, r, query._cid));
   });
 };
 
-//创建新的会话。
+// 创建新的会话。
 service.createSession = function createSession(socket, query) {
   sessionService.createSession(socket.info.userId, {
     name: query.name,
     type: query.type,
-    members: query.members
+    members: query.members,
   }, (err, r) => {
     socket.emit('createSession', json(err, r, query._cid));
   });
 };
 
-//将一个人添加到现有点的会话中
+// 将一个人添加到现有点的会话中
 service.addUserToSession = function addUserToSession(socket, query) {
   sessionService.addUserToSession(query.sessionId, query.userId, (err, r) => {
     socket.emit('addUserToSession', json(err, r, query._cid));
   });
 };
 
-//列出未读的消息，支持分页及seq
+// 列出未读的消息，支持分页及seq
 service.listUnReadMessage = function (socket, query) {
   activityService.getActivity(socket.info.userId, query.sessionId, (err, doc) => {
-    if(err) {
+    if (err) {
       return socket.emit('listUnReadMessage', errorJSON(err, query._cid));
     }
 
     messageService.listBySeq(query.sessionId, doc.seq, query.page, query.pageSize || 10, false, (err, docs) => {
       socket.emit('listUnReadMessage', json(err, docs, query._cid));
     });
-
   });
 };
 
-//将session中已读的最后一条消息的seq记录，标识该用户在这个session中读到了哪条信息
-service.hasRead = function(socket, query) {
+// 将session中已读的最后一条消息的seq记录，标识该用户在这个session中读到了哪条信息
+service.hasRead = function (socket, query) {
   activityService.setSeq(socket.info.userId, query.sessionId, query.seq, (err, r) => {
     socket.emit('listUnReadMessage', json(err, r, query._cid));
   });
 };
 
-//发送消息
+// 发送消息
 service.message = function (socket, query) {
   sessionService.getSession(query.sessionId, (err, session) => {
-    if(err) {
+    if (err) {
       return socket.emit('message', errorJSON(err, query._cid));
     }
 
@@ -107,23 +106,23 @@ service.message = function (socket, query) {
       to: { _id: query.toId, type: query.toType },
       sessionId: session._id,
       type: query.type,
-      content: content,
-      details: query.details || {}
+      content,
+      details: query.details || {},
     }, (err, info) => {
-      if(err) {
+      if (err) {
         return socket.emit('message', errorJSON(err, query._cid));
       }
 
       let rooms = null;
 
-      for(let i = 0, len = members.length; i < len; i++) {
+      for (let i = 0, len = members.length; i < len; i++) {
         rooms = socket.to(helper.getRoomNameByUserId(members[i]._id));
       }
 
-      if(rooms) {
+      if (rooms) {
         rooms.emit('message', successJSON(info, query._cid));
-      }else {
-        //如果为空，不需要调用emit返回任何东西
+      } else {
+        // 如果为空，不需要调用emit返回任何东西
       }
     });
   });

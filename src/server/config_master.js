@@ -29,5 +29,5 @@ config.whitelist = [
 
 config.secret = {
   yunXiang: 'BRYSJHHRHLYQQLMG',
-  ump: 'secret'
+  ump: 'secret',
 };

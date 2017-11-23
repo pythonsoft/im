@@ -29,7 +29,7 @@ config.port = 9000;
 
 config.secret = {
   yunXiang: 'BRYSJHHRHLYQQLMG',
-  ump: 'secret'
+  ump: 'secret',
 };
 
 const init = function init() {
