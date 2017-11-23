@@ -18,10 +18,15 @@ router.get('/', (req, res) => {
 });
 
 router.post('/sync', (req, res) => {
+  //请求参数
+  const key = req.body.key || 'yunXiang';
+  const ticket = req.body.ticket;
+
   const id = req.body.id;
   const name = req.body.name;
   const photo = req.body.photo;
   const email = req.body.email;
+  //请求参数
 
   accountService.syncAccount(id, name, photo, email, (err, r) => res.json(result.json(err, r)));
 });

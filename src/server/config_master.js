@@ -26,3 +26,8 @@ config.whitelist = [
   'http://api.szdev.cn',
   'http://localhost.szdev.cn:8000',
 ];
+
+config.secret = {
+  yunXiang: 'BRYSJHHRHLYQQLMG',
+  ump: 'secret'
+};
