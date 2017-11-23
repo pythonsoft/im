@@ -13,11 +13,15 @@ const accountService = require('./accountService');
 
 router.use(isLogin.middleware);
 
-router.get('/sync', (req, res) => {
-  const id = req.query.id;
-  const name = req.query.name;
-  const photo = req.query.photo;
-  const email = req.query.email;
+router.get('/', (req, res) => {
+  res.end('hello im');
+});
+
+router.post('/sync', (req, res) => {
+  const id = req.body.id;
+  const name = req.body.name;
+  const photo = req.body.photo;
+  const email = req.body.email;
 
   accountService.syncAccount(id, name, photo, email, (err, r) => res.json(result.json(err, r)));
 });
