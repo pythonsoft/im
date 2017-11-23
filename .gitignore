@@ -1,10 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
-.idea/im.iml
-.idea/inspectionProfiles/
-.idea/modules.xml
-.idea/watcherTasks.xml
-.idea/workspace.xml
 node_modules/
-.idea/dictionaries/
 build/
 src/logs/
+uploads/
+.idea/
