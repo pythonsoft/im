@@ -125,4 +125,8 @@ module.exports = {
     code: '-160019',
     message: '用户已存在',
   },
+  imContactIsExist: {
+    code: '-160020',
+    message: '联系人已经存在',
+  },
 };

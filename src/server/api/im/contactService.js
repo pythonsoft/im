@@ -68,21 +68,29 @@ service.add = function (info, ownerId, cb) {
     });
   };
 
-  if (cInfo.type !== ContactInfo.TYPE.PERSON) {
-    insertOne(cInfo);
-  } else {
-    accountService.getUsers(cInfo.targetId, (err, docs) => {
-      if (err) {
-        return cb && cb(err);
-      }
-
-      if (!docs || docs.length === 0) {
-        return cb && cb(i18n.t('imUserIsNotExist'));
-      }
-
+  contactInfo.collection.findOne({ ownerId: ownerId, targetId: info.targetId}, function(err, doc) {
+    if(err){
+      return cb && cb(err);
+    }
+    if(doc){
+      return cb && cb(i18n.t('imContactIsExist'));
+    }
+    if (cInfo.type !== ContactInfo.TYPE.PERSON) {
       insertOne(cInfo);
-    });
-  }
+    } else {
+      accountService.getUsers(cInfo.targetId, (err, docs) => {
+        if (err) {
+          return cb && cb(err);
+        }
+
+        if (!docs || docs.length === 0) {
+          return cb && cb(i18n.t('imUserIsNotExist'));
+        }
+
+        insertOne(cInfo);
+      });
+    }
+  });
 };
 
 service.update = function (_id, updateInfo, cb) {
