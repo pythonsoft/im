@@ -52,7 +52,7 @@ service.syncAccount = function (id, name, photo, email, cb) {
   });
 };
 
-service.login = function (id, res, cb) {
+service.login = function (id, cb) {
   if (!id) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
   }
@@ -63,17 +63,12 @@ service.login = function (id, res, cb) {
     }
 
     if (!doc) {
-      cb && cb(i18n.t('imUserIsNotExist'));
+      return cb && cb(i18n.t('imUserIsNotExist'));
     }
     const t = new Date();
     const expires = t.getTime() + config.cookieExpires;
-    const ticket = token.create('something', expires, config.secret.yunXiang);
-
-    res.cookie('im-ticket', ticket, {
-      expires: new Date(expires),
-      httpOnly: true,
-    });
-    return cb && cb(null, ticket);
+    const ticket = token.create(id, expires, config.secret.yunXiang);
+    return cb && cb(null, ticket, doc);
   });
 };
 
