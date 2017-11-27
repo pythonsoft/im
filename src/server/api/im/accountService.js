@@ -1,6 +1,8 @@
 const logger = require('../../common/log')('error');
 const utils = require('../../common/utils');
 const i18n = require('i18next');
+const token = require('../../common/token');
+const config = require('../../config');
 
 const AccountInfo = require('./accountInfo');
 
@@ -50,7 +52,7 @@ service.syncAccount = function (id, name, photo, email, cb) {
   });
 };
 
-service.login = function (id, cb) {
+service.login = function (id, res, cb) {
   if (!id) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
   }
@@ -63,8 +65,15 @@ service.login = function (id, cb) {
     if (!doc) {
       cb && cb(i18n.t('imUserIsNotExist'));
     }
+    const t = new Date();
+    const expires = t.getTime() + config.cookieExpires;
+    const ticket = token.create('something', expires, config.secret.yunXiang);
 
-    return cb && cb(null, doc);
+    res.cookie('im-ticket', ticket, {
+      expires: new Date(expires),
+      httpOnly: true,
+    });
+    return cb && cb(null, ticket);
   });
 };
 
