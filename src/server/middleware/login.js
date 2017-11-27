@@ -17,7 +17,9 @@ const login = {};
 
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
-  const ticket = query[TICKET_COOKIE_NAME] || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME)) || (req.body || req.body[TICKET_COOKIE_NAME]);
+  const ticket = query[TICKET_COOKIE_NAME]
+    || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
+    || (req.body && req.body[TICKET_COOKIE_NAME]);
 
   if (!ticket) {
     return false;
