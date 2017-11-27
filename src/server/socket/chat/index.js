@@ -14,6 +14,7 @@ class ChatIO {
     chatIO.use(helper.login);
 
     chatIO.on('connection', (socket) => {
+      console.log('connection -->', socket);
       utils.console('connection.socket.id', socket.id);
       utils.console('connection.info', socket.info);
 
