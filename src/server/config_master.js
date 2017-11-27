@@ -20,6 +20,7 @@ config.uploadPath = path.join(__dirname, '../../uploads/');
 // 允许跨域访问的地址列表
 config.whitelist = [
   'http://localhost:8000',
+  'http://localhost:8080',
   'http://10.0.15.105:8000',
   'http://10.0.15.101:8000',
   'http://ump.szdev.cn',
@@ -28,6 +29,6 @@ config.whitelist = [
 ];
 
 config.secret = {
-  yunXiang: 'BRYSJHHRHLYQQLMG',
+  yunXiang: 'meidaexpress',
   ump: 'secret',
 };

@@ -53,7 +53,7 @@ const contactService = require('./contactService');
  *                  type: string
  */
 router.post('/login', (req, res) => {
-  accountService.login(req.body.id, res, (err, r) => res.json(result.json(err, r)));
+  accountService.login(req.body.id, (err, r) => res.json(result.json(err, r)));
 });
 
 
