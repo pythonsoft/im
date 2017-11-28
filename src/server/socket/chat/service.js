@@ -54,6 +54,13 @@ service.addContact = function (socket, query) {
   });
 };
 
+//获取通讯录列表
+service.listContact = function(socket, query) {
+  contactService.list(query.ownerId, query.type, (err, r) => {
+    socket.emit('listContact', json(err, r, query._cid));
+  });
+};
+
 // 创建新的会话。
 service.createSession = function createSession(socket, query) {
   sessionService.createSession(socket.info.userId, {
