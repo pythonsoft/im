@@ -10,17 +10,21 @@ const accountInfo = new AccountInfo();
 
 const service = {};
 
-service.syncAccount = function (id, name, photo, email, cb) {
-  if (!id || id.length !== 36) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'id' }));
+service.syncAccount = function (info, cb) {
+  const aInfo = utils.merge({
+    _id: '',
+    name: '',
+    photo: '',
+    email: '',
+    phone: '',
+  }, info);
+
+  if (!aInfo._id || aInfo._id.length !== 36) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: '_id' }));
   }
 
-  if (!name) {
+  if (!aInfo.name) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
-  }
-
-  if (!photo) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'photo' }));
   }
 
   accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
@@ -33,15 +37,9 @@ service.syncAccount = function (id, name, photo, email, cb) {
       return cb && cb(i18n.t('imUserIsExist'));
     }
 
-    const info = {
-      _id: id,
-      name,
-      photo,
-      email,
-      createdTime: new Date(),
-    };
+    aInfo.createdTime = new Date();
 
-    accountInfo.insertOne(info, (err, r) => {
+    accountInfo.insertOne(aInfo, (err, r) => {
       if (err) {
         logger.error(err.message);
         return cb && cb(i18n.t('databaseError'));
@@ -52,7 +50,7 @@ service.syncAccount = function (id, name, photo, email, cb) {
   });
 };
 
-service.login = function (id, cb) {
+service.login = function (id, cb, key) {
   if (!id) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
   }
@@ -65,9 +63,12 @@ service.login = function (id, cb) {
     if (!doc) {
       return cb && cb(i18n.t('imUserIsNotExist'));
     }
+
+    const k = config.secret[key] || config.secret.yunXiang;
     const t = new Date();
     const expires = t.getTime() + config.cookieExpires;
-    const ticket = token.create(id, expires, config.secret.yunXiang);
+    const ticket = token.create(id, expires, k);
+
     return cb && cb(null, ticket, doc);
   });
 };
@@ -119,6 +120,28 @@ service.getUsers = function getUsers(ids, cb) {
 
     return cb && cb(null, docs);
   });
+};
+
+service.list = function(keyword, page=1, pageSize=20, sortFields='-createdTime', fieldNeeds, cb) {
+  const q = {};
+
+  if (keyword) {
+    q.$or = [
+      { name: { $regex: keyword, $options: 'i' } },
+      { email: { $regex: keyword, $options: 'i' } },
+      { phone: { $regex: keyword, $options: 'i' } },
+    ];
+  }
+
+  accountInfo.pagination(q, page, pageSize, (err, rs) => {
+    if (err) {
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    return cb && cb(null, rs);
+  }, sortFields, fieldNeeds);
+
 };
 
 module.exports = service;

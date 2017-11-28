@@ -160,7 +160,7 @@ service.getSession = function getSession(sessionId, cb) {
       return cb && cb(i18n.t('databaseError'));
     }
 
-    if (!docs) {
+    if (!doc) {
       return cb && cb(i18n.t('imSessionIsNotExist'));
     }
 

@@ -17,18 +17,20 @@ const login = {};
 
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
-  const ticket = query[TICKET_COOKIE_NAME] || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME)) || (req.body || req.body[TICKET_COOKIE_NAME]);
-  query.key = query.key || 'yunXiang';
+  const sk = query.key || req.body.key || 'yunxiang';
+  const ticket = query[TICKET_COOKIE_NAME]
+    || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
+    || (req.body && req.body[TICKET_COOKIE_NAME]);
 
   if (!ticket) {
     return false;
   }
 
-  if (!query.key) {
+  if (!sk) {
     return false;
   }
 
-  const key = config.secret[query.key];
+  const key = config.secret[sk];
 
   if (!key) {
     return false;
@@ -69,7 +71,7 @@ login.middleware = function middleware(req, res, next) {
 
 login.webSocketMiddleware = function (socket) {
   const authorize = socket.request.headers[TICKET_COOKIE_NAME]
-    || socket.request.headers[`${TICKET_COOKIE_NAME}`]
+    || socket.request.headers[TICKET_COOKIE_NAME]
     || utils.formatCookies(socket.request.headers.cookie)[TICKET_COOKIE_NAME]
     || socket.handshake.query[TICKET_COOKIE_NAME];
 

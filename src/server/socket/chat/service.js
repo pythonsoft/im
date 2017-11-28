@@ -33,7 +33,6 @@ const successJSON = function (doc, cid) {
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
-  console.log("get recent contact==>");
 
   sessionService.getRecentContactList(socket.info.userId, page, 30, fieldNeeds, '-modifyTime', (err, docs) => {
     socket.emit('getRecentContactList', json(err, docs, query._cid));
@@ -86,7 +85,9 @@ service.listUnReadMessage = function (socket, query) {
       return socket.emit('listUnReadMessage', errorJSON(err, query._cid));
     }
 
-    messageService.listBySeq(query.sessionId, doc.seq, query.page, query.pageSize || 10, false, (err, docs) => {
+    const seq = doc ? doc.seq : 0;
+
+    messageService.listBySeq(query.sessionId, seq, query.page, query.pageSize || 10, false, (err, docs) => {
       socket.emit('listUnReadMessage', json(err, docs, query._cid));
     });
   });
