@@ -28,8 +28,6 @@ service.add = function (info, cb) {
   info._id = uuid.v1();
   info.createTime = new Date();
 
-  console.log('minfo -->', mInfo);
-
   if (!mInfo.sessionId && mInfo.sessionId !== 36) {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'sessionId' }));
   }
