@@ -27,7 +27,11 @@ service.syncAccount = function (info, cb) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
   }
 
-  accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
+  if (aInfo.email && !utils.checkEmail(aInfo.email)) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'email' }));
+  }
+
+  accountInfo.collection.findOne({ _id: aInfo._id }, { fields: { _id: 1 } }, (err, doc) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));

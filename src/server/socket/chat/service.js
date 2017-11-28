@@ -46,7 +46,7 @@ service.addContact = function (socket, query) {
     targetName: query.targetName,
     photo: query.photo || '',
     type: query.type,
-    fromWhere: query.fromWhere || 'web',
+    fromWhere: query.fromWhere,
     details: query.details || {},
   }, socket.info.userId, (err, r) => {
     socket.emit('addContact', json(err, r, query._cid));
