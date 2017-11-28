@@ -11,7 +11,7 @@ const result = require('../common/result');
 const token = require('../common/token');
 const config = require('../config');
 
-const TICKET_COOKIE_NAME = 'ticket';
+const TICKET_COOKIE_NAME = 'im-ticket';
 
 const login = {};
 
