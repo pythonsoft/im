@@ -27,26 +27,33 @@ service.syncAccount = function (info, cb) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
   }
 
-  accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
+  accountInfo.collection.findOne({ _id: aInfo._id }, { fields: { _id: 1 } }, (err, doc) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
 
     if (doc) {
-      return cb && cb(i18n.t('imUserIsExist'));
+      delete aInfo._id;
+      accountInfo.updateOne({ _id: aInfo._id }, aInfo, (err) => {
+        if (err) {
+          logger.error(err.message);
+          return cb && cb(i18n.t('databaseError'));
+        }
+        return cb && cb(null, aInfo);
+      })
+    }else {
+      aInfo.createdTime = new Date();
+
+      accountInfo.insertOne(aInfo, (err, r) => {
+        if (err) {
+          logger.error(err.message);
+          return cb && cb(i18n.t('databaseError'));
+        }
+
+        return cb && cb(null, r);
+      });
     }
-
-    aInfo.createdTime = new Date();
-
-    accountInfo.insertOne(aInfo, (err, r) => {
-      if (err) {
-        logger.error(err.message);
-        return cb && cb(i18n.t('databaseError'));
-      }
-
-      return cb && cb(null, r);
-    });
   });
 };
 
@@ -74,8 +81,8 @@ service.login = function (id, cb, key) {
 };
 
 service.update = function (id, updateInfo, cb) {
-  if (id) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
+  if (!id) {
+    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'id' }));
   }
 
   if (updateInfo._id) {
