@@ -76,9 +76,16 @@ router.post('/sync', (req, res) => {
   const name = req.body.name;
   const photo = req.body.photo;
   const email = req.body.email;
+  const phone = req.body.phone;
   // 请求参数
 
-  accountService.syncAccount(id, name, photo, email, (err, r) => res.json(result.json(err, r)));
+  accountService.syncAccount({
+    _id: id,
+    name,
+    photo,
+    email,
+    phone
+  }, (err, r) => res.json(result.json(err, r)));
 });
 
 module.exports = router;
