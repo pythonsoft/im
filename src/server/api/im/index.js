@@ -10,6 +10,52 @@ const result = require('../../common/result');
 const router = express.Router();
 const isLogin = require('../../middleware/login');
 const accountService = require('./accountService');
+const contactService = require('./contactService');
+
+
+/**
+ * @swagger
+ * /im/login:
+ *   post:
+ *     description: 登录
+ *     tags:
+ *       - v1
+ *       - AccountInfo
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         description: 登录
+ *         schema:
+ *           type: object
+ *           required:
+ *             - id
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: ''
+ *               example: ""
+ *     responses:
+ *       200:
+ *         description: AccountInfo
+ *         schema:
+ *           type: object
+ *           properties:
+ *            status:
+ *              type: string
+ *            data:
+ *              type: object
+ *            statusInfo:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ */
+router.post('/login', (req, res) => {
+  accountService.login(req.body.id, (err, r) => res.json(result.json(err, r)));
+});
+
 
 router.use(isLogin.middleware);
 
