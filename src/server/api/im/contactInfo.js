@@ -35,7 +35,7 @@ class ContactInfo extends DB {
       ownerId: { type: 'string', validation: 'require' },
       createdTime: { type: 'date', validation: 'require', allowUpdate: false },
       modifyTime: { type: 'date', validation: 'require' },
-      fromWhere: { type: 'string' },
+      fromWhere: { type: 'string', default: ContactInfo.FROM_WHERE.MEDIAEXPRESS },
       details: { type: 'object' },
     };
   }
@@ -47,4 +47,8 @@ ContactInfo.TYPE = {
   TRANSFER_BOX: '2', // 传输盒子
 };
 
+ContactInfo.FROM_WHERE = {
+  MEDIAEXPRESS: '0', // 快传
+  UMP: '1', // ump
+};
 module.exports = ContactInfo;

@@ -16,11 +16,13 @@ class ChatIO {
     chatIO.on('connection', (socket) => {
       utils.console('connection.socket.id', socket.id);
       utils.console('connection.info', socket.info);
+      console.log("sadsdsd");
 
       const userId = socket.info.userId;
 
       // 确保当前连接放到登录用户的房间内
       helper.ensureInRoom(chatIO, socket, userId, () => {
+        console.log(" vvvvvvv");
         for (const k in service) {
           socket.on(k, (q) => {
             service[k](socket, q);

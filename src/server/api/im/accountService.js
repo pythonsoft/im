@@ -1,6 +1,8 @@
 const logger = require('../../common/log')('error');
 const utils = require('../../common/utils');
 const i18n = require('i18next');
+const token = require('../../common/token');
+const config = require('../../config');
 
 const AccountInfo = require('./accountInfo');
 
@@ -57,10 +59,12 @@ service.login = function (id, cb) {
     }
 
     if (!doc) {
-      cb && cb(i18n.t('imUserIsNotExist'));
+      return cb && cb(i18n.t('imUserIsNotExist'));
     }
-
-    return cb && cb(null, doc);
+    const t = new Date();
+    const expires = t.getTime() + config.cookieExpires;
+    const ticket = token.create(id, expires, config.secret.yunXiang);
+    return cb && cb(null, ticket, doc);
   });
 };
 

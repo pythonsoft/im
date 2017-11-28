@@ -11,13 +11,13 @@ const result = require('../common/result');
 const token = require('../common/token');
 const config = require('../config');
 
-const TICKET_COOKIE_NAME = 'ticket';
+const TICKET_COOKIE_NAME = 'im-ticket';
 
 const login = {};
 
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
-  const sk = query.key || req.body.key;
+  const sk = query.key || req.body.key || 'yunxiang';
   const ticket = query[TICKET_COOKIE_NAME]
     || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
     || (req.body && req.body[TICKET_COOKIE_NAME]);
