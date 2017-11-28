@@ -17,10 +17,6 @@ service.syncAccount = function (id, name, photo, email, cb) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
   }
 
-  if (!photo) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'photo' }));
-  }
-
   accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
     if (err) {
       logger.error(err.message);

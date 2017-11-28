@@ -78,7 +78,9 @@ service.listUnReadMessage = function (socket, query) {
       return socket.emit('listUnReadMessage', errorJSON(err, query._cid));
     }
 
-    messageService.listBySeq(query.sessionId, doc.seq, query.page, query.pageSize || 10, false, (err, docs) => {
+    const seq = doc ? doc.seq : 0;
+
+    messageService.listBySeq(query.sessionId, seq, query.page, query.pageSize || 10, false, (err, docs) => {
       socket.emit('listUnReadMessage', json(err, docs, query._cid));
     });
   });
