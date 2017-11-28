@@ -31,13 +31,6 @@ service.syncAccount = function (info, cb) {
   if (aInfo.email && !utils.checkEmail(aInfo.email)) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'email' }));
   }
-
-  accountInfo.collection.findOne({ _id: aInfo._id }, { fields: { _id: 1 } }, (err, doc) => {
-    if (err) {
-      logger.error(err.message);
-      return cb && cb(i18n.t('databaseError'));
-    }
-
     if (doc) {
       delete aInfo._id;
       accountInfo.updateOne({ _id: aInfo._id }, aInfo, (err) => {
@@ -53,14 +46,13 @@ service.syncAccount = function (info, cb) {
       accountInfo.insertOne(aInfo, (err, r) => {
         if (err) {
           logger.error(err.message);
-          return cb && cb(i18n.t('databaseError'));
-        }
-
-        return cb && cb(null, r);
-      });
-    }
-  });
-};
+            return cb && cb(i18n.t('databaseError'));
+          }
+          return cb && cb(null, r);
+        });
+      }
+    });
+  };
 
 service.login = function (id, cb, key) {
   if (!id) {
