@@ -52,10 +52,6 @@ service.getActivity = function (ownerId, sessionId, cb) {
       return cb && cb(i18n.t('databaseError'));
     }
 
-    if (!doc) {
-      return cb && cb(i18n.t('imActivityIsNotExist'));
-    }
-
     return cb && cb(null, doc);
   });
 };

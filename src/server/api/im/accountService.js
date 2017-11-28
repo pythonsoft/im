@@ -19,10 +19,6 @@ service.syncAccount = function (id, name, photo, email, cb) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'name' }));
   }
 
-  if (!photo) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'photo' }));
-  }
-
   accountInfo.collection.findOne({ _id: id }, { fields: { _id: 1 } }, (err, doc) => {
     if (err) {
       logger.error(err.message);
@@ -52,7 +48,7 @@ service.syncAccount = function (id, name, photo, email, cb) {
   });
 };
 
-service.login = function (id, cb) {
+service.login = function (id, cb, key) {
   if (!id) {
     return cb && cb(i18n.t('imAccountFieldsIsNull', { fields: 'id' }));
   }
@@ -65,9 +61,12 @@ service.login = function (id, cb) {
     if (!doc) {
       return cb && cb(i18n.t('imUserIsNotExist'));
     }
+
+    const k = config.secret[key] || config.secret.yunXiang;
     const t = new Date();
     const expires = t.getTime() + config.cookieExpires;
-    const ticket = token.create(id, expires, config.secret.yunXiang);
+    const ticket = token.create(id, expires, k);
+
     return cb && cb(null, ticket, doc);
   });
 };
