@@ -33,7 +33,6 @@ const successJSON = function (doc, cid) {
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
-  console.log("get recent contact==>");
 
   sessionService.getRecentContactList(socket.info.userId, page, 30, fieldNeeds, '-modifyTime', (err, docs) => {
     socket.emit('getRecentContactList', json(err, docs, query._cid));
