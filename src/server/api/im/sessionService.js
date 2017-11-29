@@ -153,6 +153,7 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
+  console.log('getSession--->',sessionId);
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
@@ -162,7 +163,7 @@ service.getSession = function getSession(sessionId, cb) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
-
+    console.log('0000000----》',doc);
     if (!doc) {
       return cb && cb(i18n.t('imSessionIsNotExist'));
     }

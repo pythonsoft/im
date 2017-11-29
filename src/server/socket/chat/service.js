@@ -144,6 +144,7 @@ service.message = function (socket, query) {
       if (rooms) {
         rooms.emit('message', successJSON(info, query._cid));
       } else {
+        rooms.emit('message','你是傻逼');
         // 如果为空，不需要调用emit返回任何东西
       }
     });

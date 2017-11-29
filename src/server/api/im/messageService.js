@@ -11,7 +11,8 @@ const messageInfo = new MessageInfo();
 
 const service = {};
 
-service.add = function (info, cb) {
+  service.add = function (info, cb) {
+  console.log('这是发送消息的Info---->',info);
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'info' }));
   }
@@ -53,7 +54,7 @@ service.add = function (info, cb) {
   if (utils.isEmptyObject(mInfo.from) || mInfo.to._id.length !== 36 || !utils.isValueInObject(mInfo.to.type, ContactInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'to' }));
   }
-
+  console.log('type--------》',mInfo.type,'111111111--->',MessageInfo.TYPE);
   if (!utils.isValueInObject(mInfo.type, MessageInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageTypeIsNotExist'));
   }
@@ -63,7 +64,8 @@ service.add = function (info, cb) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
-
+    console.log('存在数据库里面-------》',mInfo);
+    console.log('这个R是什么------>',r);
     return cb && cb(null, mInfo);
   });
 };
