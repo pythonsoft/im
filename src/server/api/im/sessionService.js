@@ -34,6 +34,7 @@ service.getRecentContactList = function getRecentContactList(userId, page = 1, p
 };
 
 service.createSession = function createSession(creatorId, info, cb) {
+
   if (!creatorId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'creatorId' }));
   }
@@ -41,13 +42,13 @@ service.createSession = function createSession(creatorId, info, cb) {
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'info' }));
   }
-
+  console.log('createSession INFO--->',info);
   const sInfo = utils.merge({
     name: '',
     type: '',
     members: '',
   }, info);
-
+  console.log('sInfo------->',sInfo);
   sInfo._id = uuid.v1();
   const t = new Date();
   sInfo.createdTime = t;
@@ -63,6 +64,8 @@ service.createSession = function createSession(creatorId, info, cb) {
   }
 
   if (!sInfo.type || !utils.isValueInObject(sInfo.type, SessionInfo.TYPE)) {
+    console.log('22222222------>',sInfo.type);
+    console.log('11111111------>',SessionInfo.TYPE);
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'type' }));
   }
 
