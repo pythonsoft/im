@@ -103,6 +103,18 @@ service.hasRead = function (socket, query) {
 
 // 发送消息
 service.message = function (socket, query) {
+  /**
+   * const query = {
+   *    sessionId: '',
+   *    content: '',
+   *    fromId: '',
+   *    toId: '',
+   *    toType: '',
+   *    type: '',
+   *    _cid: '',
+   *    details: {},
+   * }
+   */
   sessionService.getSession(query.sessionId, (err, session) => {
     if (err) {
       return socket.emit('message', errorJSON(err, query._cid));
