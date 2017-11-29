@@ -5,6 +5,7 @@ const sessionService = require('../../api/im/sessionService');
 const contactService = require('../../api/im/contactService');
 const activityService = require('../../api/im/activityService');
 const messageService = require('../../api/im/messageService');
+const accountService = require('../../api/im/accountService');
 const helper = require('./helper');
 
 const service = {};
@@ -50,6 +51,13 @@ service.addContact = function (socket, query) {
     details: query.details || {},
   }, socket.info.userId, (err, r) => {
     socket.emit('addContact', json(err, r, query._cid));
+  });
+};
+
+//获取通讯录列表
+service.listContact = function(socket, query) {
+  contactService.list(query.ownerId, query.type, (err, r) => {
+    socket.emit('listContact', json(err, r, query._cid));
   });
 };
 
@@ -142,4 +150,10 @@ service.message = function (socket, query) {
   });
 };
 
+// 通过关键字检索找到用户
+service.searchUser = function (socket, query) {
+  accountService.list(query.keyword,query.page=1, query.pageSize=20, query.sortFields='-createdTime', query.fieldNeeds, (err, rs) => {
+    socket.emit('searchUser', json(err, rs, query._cid));
+  })
+};
 module.exports = service;

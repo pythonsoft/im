@@ -17,11 +17,12 @@ const login = {};
 
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
-  const sk = query.key || req.body.key || 'yunxiang';
+  const sk = query.key || req.body.key || 'yunXiang';
   const ticket = query[TICKET_COOKIE_NAME]
     || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
     || (req.body && req.body[TICKET_COOKIE_NAME]);
 
+  console.log(ticket, sk);
   if (!ticket) {
     return false;
   }
@@ -48,6 +49,7 @@ login.isLogin = function isLogin(req) {
 login.middleware = function middleware(req, res, next) {
   const decodeTicket = login.isLogin(req);
 
+  console.log("ticket===>",decodeTicket);
   if (decodeTicket) {
     const now = new Date().getTime();
     if (decodeTicket[1] > now) { // token有效期内
