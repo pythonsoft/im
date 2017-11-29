@@ -49,7 +49,6 @@ login.isLogin = function isLogin(req) {
 login.middleware = function middleware(req, res, next) {
   const decodeTicket = login.isLogin(req);
 
-  console.log("ticket===>",decodeTicket);
   if (decodeTicket) {
     const now = new Date().getTime();
     if (decodeTicket[1] > now) { // token有效期内

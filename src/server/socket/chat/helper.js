@@ -44,7 +44,6 @@ helper.ensureInRoom = function joinRoom(ns, socket, userId, successFn) {
   const userRoomName = helper.getRoomNameByUserId(userId);
 
   ns.adapter.clients([userRoomName], (err, clients) => {
-    console.log('clients-->', clients, socket.id, socket.info);
 
     // 当前socket没有在用户的房间里
     if (clients.indexOf(socket.id) === -1) {
