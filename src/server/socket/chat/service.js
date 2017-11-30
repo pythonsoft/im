@@ -102,7 +102,7 @@ service.hasRead = function (socket, query) {
 };
 
 // 发送消息
-service.message = function (socket, query) {
+service.message = function (socket, query, ns) {
   /**
    * const query = {
    *    sessionId: '',
@@ -138,14 +138,14 @@ service.message = function (socket, query) {
       let rooms = null;
 
       for (let i = 0, len = members.length; i < len; i++) {
-        rooms = socket.to(helper.getRoomNameByUserId(members[i]._id));
+        ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message', successJSON(info, query._cid));
       }
 
-      if (rooms) {
-        rooms.emit('message', successJSON(info, query._cid));
-      } else {
-        // 如果为空，不需要调用emit返回任何东西
-      }
+      // if (rooms) {
+      //   rooms.emit('message', successJSON(info, query._cid));
+      // } else {
+      //   // 如果为空，不需要调用emit返回任何东西
+      // }
     });
   });
 };
@@ -156,4 +156,5 @@ service.searchUser = function (socket, query) {
     socket.emit('searchUser', json(err, rs, query._cid));
   })
 };
+
 module.exports = service;

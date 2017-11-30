@@ -23,7 +23,7 @@ class ChatIO {
       helper.ensureInRoom(chatIO, socket, userId, () => {
         for (const k in service) {
           socket.on(k, (q) => {
-            service[k](socket, q);
+            service[k](socket, q, chatIO);
           });
         }
 
