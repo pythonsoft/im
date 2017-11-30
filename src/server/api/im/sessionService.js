@@ -42,13 +42,13 @@ service.createSession = function createSession(creatorId, info, cb) {
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'info' }));
   }
-  console.log('createSession INFO--->',info);
+
   const sInfo = utils.merge({
     name: '',
     type: '',
     members: '',
   }, info);
-  console.log('sInfo------->',sInfo);
+
   sInfo._id = uuid.v1();
   const t = new Date();
   sInfo.createdTime = t;
@@ -153,7 +153,7 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
-  console.log('getSession--->',sessionId);
+
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
@@ -163,7 +163,7 @@ service.getSession = function getSession(sessionId, cb) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
-    console.log('0000000----》',doc);
+
     if (!doc) {
       return cb && cb(i18n.t('imSessionIsNotExist'));
     }
