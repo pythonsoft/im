@@ -22,6 +22,7 @@ const service = {};
     sessionId: '',
     type: '',
     content: '',
+    members: [],
     details: {},
   }, info);
 

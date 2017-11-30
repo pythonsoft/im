@@ -129,6 +129,7 @@ service.message = function (socket, query, ns) {
       sessionId: session._id,
       type: query.type,
       content,
+      members,
       details: query.details || {},
     }, (err, info) => {
       if (err) {
