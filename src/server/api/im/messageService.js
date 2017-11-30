@@ -11,7 +11,7 @@ const messageInfo = new MessageInfo();
 
 const service = {};
 
-service.add = function (info, cb) {
+  service.add = function (info, cb) {
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'info' }));
   }
@@ -63,7 +63,6 @@ service.add = function (info, cb) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
-
     return cb && cb(null, mInfo);
   });
 };

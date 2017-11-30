@@ -34,6 +34,7 @@ service.getRecentContactList = function getRecentContactList(userId, page = 1, p
 };
 
 service.createSession = function createSession(creatorId, info, cb) {
+
   if (!creatorId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'creatorId' }));
   }
@@ -63,6 +64,8 @@ service.createSession = function createSession(creatorId, info, cb) {
   }
 
   if (!sInfo.type || !utils.isValueInObject(sInfo.type, SessionInfo.TYPE)) {
+    console.log('22222222------>',sInfo.type);
+    console.log('11111111------>',SessionInfo.TYPE);
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'type' }));
   }
 
@@ -150,6 +153,7 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
+
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
