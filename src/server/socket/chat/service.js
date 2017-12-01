@@ -135,17 +135,10 @@ service.message = function (socket, query, ns) {
         return socket.emit('message', errorJSON(err, query._cid));
       }
 
-      let rooms = null;
-
       for (let i = 0, len = members.length; i < len; i++) {
         ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message', successJSON(info, query._cid));
       }
 
-      // if (rooms) {
-      //   rooms.emit('message', successJSON(info, query._cid));
-      // } else {
-      //   // 如果为空，不需要调用emit返回任何东西
-      // }
     });
   });
 };
