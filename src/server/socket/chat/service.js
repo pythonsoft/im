@@ -30,7 +30,7 @@ const successJSON = function (doc, cid) {
   return result.success(doc, 'ok', cid);
 };
 
-// 获取最近会话
+// 获取最近会话人
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
@@ -150,9 +150,17 @@ service.message = function (socket, query, ns) {
 };
 
 // 通过关键字检索找到用户
-service.searchUser = function (socket, query) {
+service.searchUser = function (socket, query)  {
   accountService.list(query.keyword,query.page=1, query.pageSize=20, query.sortFields='-createdTime', query.fieldNeeds, (err, rs) => {
     socket.emit('searchUser', json(err, rs, query._cid));
   })
 };
+
+// 找到两个ID的共有会话
+service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(socket,query) {
+  sessionService.getSessionByUserIdAtC2C(query.ownerId,query.targetId,(err, rs) => {
+    socket.emit('getSessionByUserIdAtC2C',json(err, rs, query._cid));
+  })
+};
+
 module.exports = service;
