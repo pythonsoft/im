@@ -106,7 +106,7 @@ service.update = function (_id, updateInfo, cb) {
 };
 
 service.list = function (ownerId, type, cb) {
-  console.log('list----->',ownerId,'类型------>',typeof type);
+
   if (!ownerId) {
     return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'ownerId' }));
   }
@@ -118,15 +118,47 @@ service.list = function (ownerId, type, cb) {
   if (type) {
     q.type = type;
   }
-  console.log('这是搜索条件----->',q);
+
   contactInfo.collection.find(q).toArray((err, docs) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
-    console.log('搜索结果——-----》',docs);
+
     return cb && cb(null, docs);
   });
 };
+
+service.delete = function (ownerId, targetId, type, cb) {
+  if(!ownerId){
+    return console.log('deleteError1');
+  }
+
+  if(!targetId){
+    return console.log('deleteError2');
+  }
+
+  if(!type){
+    return console.log('deleteError3');
+  }
+
+  contactInfo.collection.deleteOne({
+    ownerId:ownerId,
+    targetId:targetId,
+    type:type,
+  },(err, doc) => {
+    if(err){
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    if (!doc) {
+      return cb && cb(i18n.t('imSessionIsNotExist'));
+    }
+
+    return cb && cb(null, doc);
+  })
+};
+
 
 module.exports = service;
