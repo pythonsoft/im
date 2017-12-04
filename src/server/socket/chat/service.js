@@ -163,4 +163,10 @@ service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(socket,query)
   })
 };
 
+// 删除好友
+service.deleteContact = function deleteContact(socket,query) {
+  contactService.delete(query.ownerId,query.targetId,query.type,(err, rs) => {
+    socket.emit('deleteContact',json(err, rs, query._cid));
+  })
+};
 module.exports = service;
