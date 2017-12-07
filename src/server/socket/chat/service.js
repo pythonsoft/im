@@ -170,3 +170,10 @@ service.deleteContact = function deleteContact(socket,query) {
   })
 };
 module.exports = service;
+
+//获取session信息
+service.getSessionInfo = function (socket,query) {
+  sessionService.getSession(query.sessionId,(err, rs) => {
+    socket.emit('getSessionInfo',json(err, rs, query._cid));
+  })
+};
