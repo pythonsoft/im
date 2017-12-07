@@ -48,7 +48,6 @@ service.createSession = function createSession(creatorId, info, cb) {
     type: '',
     members: '',
   }, info);
-
   sInfo._id = uuid.v1();
   const t = new Date();
   sInfo.createdTime = t;
@@ -64,23 +63,19 @@ service.createSession = function createSession(creatorId, info, cb) {
   }
 
   if (!sInfo.type || !utils.isValueInObject(sInfo.type, SessionInfo.TYPE)) {
-    console.log('22222222------>',sInfo.type);
-    console.log('11111111------>',SessionInfo.TYPE);
+
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'type' }));
   }
-
   accountService.getUsers(sInfo.members, (err, users) => {
     if (err) {
       return cb && cb(err);
     }
 
     sInfo.members = users;
-
     sessionInfo.insertOne(sInfo, (err) => {
       if (err) {
         return cb && cb(err);
       }
-
       return cb && cb(null, sInfo);
     });
   });

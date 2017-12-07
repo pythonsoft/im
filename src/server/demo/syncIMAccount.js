@@ -7,7 +7,6 @@ const TICKET = '8649e68b4adc426b6d8eda111be86f446b66d0f6b89f40334ef5fb6ad1b567c5
 
 userInfo.collection.find({}).toArray((err, docs) => {
   if(err) {
-    console.log('collections error -->', err);
     return false;
   }
 

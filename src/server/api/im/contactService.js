@@ -22,7 +22,7 @@ const hasBeenAdd = function (ownerId, _id, type, cb) {
 };
 
 service.add = function (info, ownerId, cb) {
-  console.log('targetName---->',info);
+
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'info' }));
   }
@@ -143,9 +143,9 @@ service.delete = function (ownerId, targetId, type, cb) {
   }
 
   contactInfo.collection.deleteOne({
-    ownerId:ownerId,
-    targetId:targetId,
-    type:type,
+    ownerId: ownerId,
+    targetId: targetId,
+    type: type,
   },(err, doc) => {
     if(err){
       logger.error(err.message);
