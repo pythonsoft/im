@@ -169,11 +169,34 @@ service.deleteContact = function deleteContact(socket,query) {
     socket.emit('deleteContact',json(err, rs, query._cid));
   })
 };
-module.exports = service;
 
 //获取session信息
-service.getSessionInfo = function (socket,query) {
+service.getSessionInfo = function (socket, query) {
   sessionService.getSession(query.sessionId,(err, rs) => {
     socket.emit('getSessionInfo',json(err, rs, query._cid));
   })
 };
+
+//获取历史消息
+service.listStorage = function (socket, query) {
+  messageService.list(query.sessionId, query.page, query.pageSize || 10 , false , (err, docs) => {
+    socket.emit('listStorage', json(err, docs, query._cid));
+  })
+};
+
+// 用户删除一个会话时，将用户从这个上会话移除
+service.leaveSession = function (socket, query) {
+  sessionService.leaveSession(query.sessionId, query.userId, (err, docs) => {
+    socket.emit('leaveSession',json(err, docs, query._cid));
+  })
+};
+
+//删除一个会话
+service.deleteSession =function (socket, query) {
+  sessionService.deleteSession(query.sessionId, query.creatorId, (err, docs) => {
+    socket.emit('deleteSession',json(err, docs, query._cid));
+  })
+};
+
+module.exports = service;
+
