@@ -11,7 +11,7 @@ const messageInfo = new MessageInfo();
 
 const service = {};
 
-  service.add = function (info, cb) {
+service.add = function (info, cb) {
   if (utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'info' }));
   }

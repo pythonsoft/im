@@ -148,6 +148,7 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
+  console.log('11111111',sessionId);
 
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
@@ -194,6 +195,32 @@ service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(meId, targetI
 
     return cb && cb(null, doc);
   });
+};
+
+service.deleteSession =function deleteSession(sessionId, creatorId, cb) {
+  if(!sessionId){
+    return console.log('deleteError1');
+  }
+
+  if(!creatorId){
+    return console.log('deleteError2');
+  }
+
+  sessionInfo.collection.deleteOne({
+    _id:sessionId,
+    creatorId:creatorId,
+  },(err,doc) => {
+    if(err){
+      logger.errror(err.message);
+      return cb && cb(i18n.t('databaseError'))
+    }
+
+    if(!doc) {
+      return cb && cb(i18n.t('imSessionIsNotExist'));
+    }
+
+    return cb && cb(null, doc);
+  })
 };
 
 module.exports = service;
