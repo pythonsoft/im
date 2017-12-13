@@ -34,7 +34,7 @@ const successJSON = function (doc, cid) {
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
-
+  console.log('getRecentContactList',socket.info.userId);
   sessionService.getRecentContactList(socket.info.userId, page, 30, fieldNeeds, '-modifyTime', (err, docs) => {
     socket.emit('getRecentContactList', json(err, docs, query._cid));
   });
@@ -195,8 +195,10 @@ service.leaveSession = function (socket, query) {
 service.deleteSession =function (socket, query) {
   sessionService.deleteSession(query.sessionId, query.creatorId, (err, docs) => {
     socket.emit('deleteSession',json(err, docs, query._cid));
-  })
+  });
 };
+
+
 
 module.exports = service;
 
