@@ -9,6 +9,8 @@ const MessageInfo = require('./messageInfo');
 
 const messageInfo = new MessageInfo();
 
+const sessionSerivce = require('./sessionService');
+
 const service = {};
 
 service.add = function (info, cb) {
@@ -26,8 +28,8 @@ service.add = function (info, cb) {
     details: {},
   }, info);
 
-  info._id = uuid.v1();
-  info.createTime = new Date();
+  mInfo._id = uuid.v1();
+  mInfo.createTime = new Date();
 
   if (!mInfo.sessionId && mInfo.sessionId !== 36) {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'sessionId' }));
@@ -59,12 +61,28 @@ service.add = function (info, cb) {
     return cb && cb(i18n.t('imMessageTypeIsNotExist'));
   }
 
-  messageInfo.findOneAndUpdate(mInfo, { $inc: { seq: 1 } }, { upsert: true }, (err, r) => {
+  sessionSerivce.generateSessionMessageIndex(mInfo.sessionId, (err, sInfo) => {
     if (err) {
       logger.error(err.message);
-      return cb && cb(i18n.t('databaseError'));
+      return cb && cb(err);
     }
-    return cb && cb(null, mInfo);
+
+    mInfo.seq = sInfo.messageIndex;
+    messageInfo.insertOne(mInfo, (err, r) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(err);
+      }
+
+      sessionSerivce.updateSessionModifyTime(mInfo.sessionId, (err, r) => {
+        if (err) {
+          logger.error(err.message);
+          return cb && cb(err);
+        }
+
+        return cb && cb(null, mInfo);
+      });
+    });
   });
 };
 
