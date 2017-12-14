@@ -105,7 +105,7 @@ login.webSocketMiddleware = function (socket) {
       secret = secret === '1' ? '1' : '0';
 
       if (userId) {
-        return result.success({ socketId: socket.id, info: { userId, secret, key } });
+        return result.success({ socketId: socket.id, info: { userId, secret: secret === '1', key } });
       }
       return result.fail(i18n.t('imAuthorizeInvalid'));
     } catch (e) {

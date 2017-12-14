@@ -15,7 +15,7 @@ class FileClient {
     this.settings = Object.assign({
       host: 'localhost',
       port: 8090,
-      key: config.KEY,
+      key: config.secret.ump,
       userId: 'chaoningx@gmail.com',
       isCrypto: true,
       filePath: '/Users/chaoningxie/Downloads/ubuntu-16.04-server-amd64.iso',
@@ -36,7 +36,8 @@ class FileClient {
 
     const socket = clientConnect(`http://${me.settings.host}:${me.settings.port}/file`, {
       extraHeaders: {
-        'ump-ticket': utils.cipher(`${me.settings.userId}-${me.settings.isCrypto ? 1 : 0}`, me.settings.key),
+        'im-ticket': utils.cipher(`${me.settings.userId}-${me.settings.isCrypto ? 1 : 0}`, me.settings.key),
+        'im-key': 'ump',
       },
     });
 
@@ -170,7 +171,7 @@ class FileClient {
 
 const fc = new FileClient({
   host: '10.0.16.125',
-  port: 8080,
+  port: 9000,
   filePath: '/Users/chaoningx/Downloads/Microsoft_Office_2016_15.24.0_160709_Installer.pkg',
   concurrency: 5, // 并发
   userId: 'chaoningx',

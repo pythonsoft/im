@@ -6,7 +6,6 @@ const path = require('path');
 const socketStream = require('socket.io-stream');
 const crypto = require('crypto');
 const utils = require('../../common/utils');
-const loginMiddleware = require('../../middleware/login');
 const helper = require('../chat/helper');
 
 const config = require('../../config');
@@ -154,21 +153,7 @@ class FileIO {
   constructor(io) {
     const fileIO = io.of('/file');
 
-    // / authorize
-    fileIO.use((socket, next) => {
-      const rs = loginMiddleware.webSocketMiddleware(socket);
-
-      if (rs.status === '0') {
-        const data = rs.data;
-        socket.info = data.info;
-
-        socketIds[data.socketId] = socket.info;
-        next();
-      } else {
-        socket.emit('error', rs);
-        socket.disconnect();
-      }
-    });
+    fileIO.use(helper.login);
 
     fileIO.on('connection', (socket) => {
       utils.console('file connection', socket.id);
@@ -234,9 +219,10 @@ class FileIO {
           socketId: socket.id,
         };
 
-        socketIds[socket.id]._id = data._id;
+        // socketIds[socket.id]._id = data._id;
+        socket.info.taskId = data._id;
 
-        utils.console('socket id map', socketIds[socket.id]);
+        utils.console('socket id map', socket.info.taskId);
 
         fs.mkdirSync(path.join(o.targetDir));
 
@@ -250,7 +236,7 @@ class FileIO {
       socket.on('error', (err) => {
         utils.console(`socket error socket id: ${socket.id}`, err);
         socket.disconnect();
-        updateStatus(socketIds[socket.id]._id, STATUS.error, err);
+        updateStatus(socket.info.taskId, STATUS.error, err);
       });
 
       socket.on('disconnect', () => {
@@ -305,7 +291,9 @@ class FileIO {
           passedLength += chunk.length;
         });
 
-        if (socketIds[socket.id].secret) {
+        console.log('socket.info.secret --->', socket.info.secret);
+
+        if (socket.info.secret) {
           const decipher = crypto.createDecipher('aes192', socket.info.key);
           stream.pipe(decipher).pipe(writeStream);
         } else {
