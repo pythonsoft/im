@@ -153,18 +153,34 @@ service.getSession = function getSession(sessionId, cb) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
 
-  sessionInfo.collection.findOne({ _id: sessionId }, (err, doc) => {
-    if (err) {
-      logger.error(err.message);
-      return cb && cb(i18n.t('databaseError'));
-    }
+  if(sessionId.constructor === Array) {
+    sessionInfo.collection.find({ _id: { $in: sessionId } }).toArray((err, docs) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(i18n.t('databaseError'));
+      }
 
-    if (!doc) {
-      return cb && cb(i18n.t('imSessionIsNotExist'));
-    }
+      if (docs.length === 0) {
+        return cb && cb(i18n.t('imSessionIsNotExist'));
+      }
 
-    return cb && cb(null, doc);
-  });
+      return cb && cb(null, docs);
+    });
+  }else {
+    sessionInfo.collection.findOne({ _id: sessionId }, (err, doc) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(i18n.t('databaseError'));
+      }
+
+      if (!doc) {
+        return cb && cb(i18n.t('imSessionIsNotExist'));
+      }
+
+      return cb && cb(null, doc);
+    });
+  }
+
 };
 
 /**
@@ -284,7 +300,10 @@ service.setOnTopSession = function (sessionId, cb) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
 
-  sessionInfo.collection.updateOne({ _id: sessionId }, { $set: { onTopCreatedTime: new Date() } }, (err, r) => {
+  sessionInfo.collection.updateOne({ _id: sessionId }, { $set: {
+    onTopCreatedTime: new Date(),
+    isOnTop: true,
+  }}, (err, r) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));

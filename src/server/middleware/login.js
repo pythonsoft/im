@@ -90,6 +90,7 @@ login.webSocketMiddleware = function (socket) {
   }
 
   if (authorize) {
+    console.log('1',authorize);
     try {
       const dec = utils.decipher(authorize, secretKey);
       const codes = dec.split(',');
