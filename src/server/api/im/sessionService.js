@@ -22,7 +22,6 @@ service.getRecentContactList = function getRecentContactList(userId, page = 1, p
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'userId' }));
   }
 
-
   sessionInfo.pagination({ 'members._id': userId }, page, pageSize, (err, docs) => {
     if (err) {
       logger.error(err.message);

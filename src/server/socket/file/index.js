@@ -157,6 +157,7 @@ class FileIO {
     // / authorize
     fileIO.use((socket, next) => {
       const rs = loginMiddleware.webSocketMiddleware(socket);
+      console.log("rs==>", rs);
 
       if (rs.status === '0') {
         const data = rs.data;

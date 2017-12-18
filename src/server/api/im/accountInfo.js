@@ -19,6 +19,7 @@ class AccountInfo extends DB {
       createdTime: { type: 'date', validation: 'require', allowUpdate: false },
       email: { type: 'string', validation: utils.checkEmail },
       photo: { type: 'string' },
+      phone: { type: 'string' },
       strangerAuthorizeType: { type: 'string',
         validation(v) {
           let flag = false;
