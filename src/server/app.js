@@ -56,6 +56,7 @@ app.use(cookieParser());
 app.use(bodyParser.json({ limit: '3mb' })); // for parsing application/json
 app.use(bodyParser.urlencoded({ limit: '3mb', extended: true })); // for parsing application/x-www-form-urlencoded
 app.use('/', express.static(path.resolve('build', 'public')));
+app.use('/uploads', express.static(config.uploadPath));
 
 app.use(i18nMiddleware);
 
