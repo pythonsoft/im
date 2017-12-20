@@ -21,25 +21,55 @@ const hasBeenAdd = function (ownerId, _id, type, cb) {
   });
 };
 
-service.add = function (info, ownerId, cb) {
+service.addMany = function (infos, cb) {
+  if(utils.isEmptyObject(infos) || infos.constructor !== Array) {
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'infos' }) };
+  }
+
+  const len = infos.length;
+  const arr = [];
+  let temp = null;
+
+  if(len === 0) {
+    return cb && cb(i18n.t('xxxx'));
+  }
+
+  for(let i = 0, len = infos.length; i < len; i++) {
+    temp = getContactInfo(infos[i], infos[i].ownerId);
+    if(temp.err) {
+      return cb && cb(i18n.t('xxx'));
+    }
+    arr.push(temp.info);
+  }
+
+  contactInfo.insertMany(arr, (err, r) => {
+    if(err) {
+      return cb && cb(err);
+    }
+
+    return cb && cb(null, r);
+  });
+};
+
+const getContactInfo = function(info, ownerId) {
   if (utils.isEmptyObject(info)) {
-    return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'info' }));
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'info' }) };
   }
 
   if (!info.targetId) {
-    return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'targetId' }));
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'targetId' }) };
   }
 
   if (!info.targetName) {
-    return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'targetName' }));
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'targetName' }) };
   }
 
   if (!info.type) {
-    return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'type' }));
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'type' }) };
   }
 
-  if (!ownerId) {
-    return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'ownerId' }));
+  if (!info.ownerId) {
+    return { err: i18n.t('imContactFieldsIsNull', { field: 'ownerId' }) };
   }
 
   const cInfo = utils.merge({
@@ -58,6 +88,23 @@ service.add = function (info, ownerId, cb) {
   cInfo.modifyTime = t;
   cInfo.ownerId = ownerId;
 
+  return { err: '', info: cInfo };
+};
+
+service.add = function (info, ownerId, cb) {
+  if(info.constructor === Array) {
+    service.addMany(info, cb);
+    return false;
+  }
+
+  const rs = getContactInfo(info, ownerId);
+
+  if(rs.err) {
+    return cb && cb (rs.err);
+  }
+
+  const cInfo = rs.info;
+
   const insertOne = function (o) {
     contactInfo.insertOne(o, (err, r) => {
       if (err) {
@@ -68,21 +115,29 @@ service.add = function (info, ownerId, cb) {
     });
   };
 
-  if (cInfo.type !== ContactInfo.TYPE.PERSON) {
-    insertOne(cInfo);
-  } else {
-    accountService.getUsers(cInfo.targetId, (err, docs) => {
-      if (err) {
-        return cb && cb(err);
-      }
-
-      if (!docs || docs.length === 0) {
-        return cb && cb(i18n.t('imUserIsNotExist'));
-      }
-
+  contactInfo.collection.findOne({ ownerId: ownerId, targetId: info.targetId}, function(err, doc) {
+    if(err){
+      return cb && cb(err);
+    }
+    if(doc){
+      return cb && cb(i18n.t('imContactIsExist'));
+    }
+    if (cInfo.type !== ContactInfo.TYPE.PERSON) {
       insertOne(cInfo);
-    });
-  }
+    } else {
+      accountService.getUsers(cInfo.targetId, (err, docs) => {
+        if (err) {
+          return cb && cb(err);
+        }
+
+        if (!docs || docs.length === 0) {
+          return cb && cb(i18n.t('imUserIsNotExist'));
+        }
+
+        insertOne(cInfo);
+      });
+    }
+  });
 };
 
 service.update = function (_id, updateInfo, cb) {
@@ -105,6 +160,7 @@ service.update = function (_id, updateInfo, cb) {
 };
 
 service.list = function (ownerId, type, cb) {
+
   if (!ownerId) {
     return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'ownerId' }));
   }
@@ -126,5 +182,41 @@ service.list = function (ownerId, type, cb) {
     return cb && cb(null, docs);
   });
 };
+
+service.delete = function (ownerId, targetId, type, cb) {
+  if(!ownerId){
+    return console.log('deleteError1');
+  }
+
+  if(!targetId){
+    return console.log('deleteError2');
+  }
+
+  if(!type){
+    return console.log('deleteError3');
+  }
+
+  contactInfo.collection.deleteOne({
+    ownerId: ownerId,
+    targetId: targetId,
+    type: type,
+  },(err, doc) => {
+    if(err){
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    if (!doc) {
+      return cb && cb(i18n.t('imSessionIsNotExist'));
+    }
+
+    return cb && cb(null, doc);
+  })
+};
+
+service.isFriend = function () {
+  
+}
+
 
 module.exports = service;

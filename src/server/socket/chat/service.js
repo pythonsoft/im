@@ -8,6 +8,8 @@ const messageService = require('../../api/im/messageService');
 const accountService = require('../../api/im/accountService');
 const helper = require('./helper');
 
+const ContactInfo = require('../../api/im/contactInfo');
+
 const service = {};
 
 const json = function (err, r, cid) {
@@ -30,7 +32,7 @@ const successJSON = function (doc, cid) {
   return result.success(doc, 'ok', cid);
 };
 
-// 获取最近会话
+// 获取最近会话人
 service.getRecentContactList = function getRecentContactList(socket, query) {
   const page = query.page;
   const fieldNeeds = query.fieldsNeed;
@@ -42,22 +44,57 @@ service.getRecentContactList = function getRecentContactList(socket, query) {
 
 // 添加人，群，盒子到通讯录
 service.addContact = function (socket, query) {
-  contactService.add({
-    targetId: query.targetId,
-    targetName: query.targetName,
-    photo: query.photo || '',
-    type: query.type,
-    fromWhere: query.fromWhere,
-    details: query.details || {},
-  }, socket.info.userId, (err, r) => {
+  contactService.add(query.info, socket.info.userId, (err, r) => {
     socket.emit('addContact', json(err, r, query._cid));
   });
 };
 
 //获取通讯录列表
 service.listContact = function(socket, query) {
-  contactService.list(query.ownerId, query.type, (err, r) => {
-    socket.emit('listContact', json(err, r, query._cid));
+  contactService.list(query.ownerId, query.type, (err, docs) => {
+    if(err) {
+      return socket.emit('listContact', errorJSON(err, query._cid));
+    }
+
+    const len = docs.length;
+
+    if(len === 0) {
+      return socket.emit('listContact', json(err, docs, query._cid));
+    }
+
+    const sessionIds = [];
+    let temp = null;
+
+    for(let i = 0; i < len; i++) {
+      temp = docs[i];
+      docs[i].sessionInfo = {};
+
+      if(temp.type === ContactInfo.TYPE.NORMAL_GROUP) {
+        sessionIds.push(temp.targetId);
+      }
+
+    }
+
+    if(sessionIds.length === 0) {
+      return socket.emit('listContact', json(err, docs, query._cid));
+    }
+
+    sessionService.getSession(sessionIds, (err, sDocs) => {
+      if (err) {
+        return socket.emit('listContact', errorJSON(err, query._cid));
+      }
+
+      for (let i = 0, l = sDocs.length; i < l; i++) {
+        for(let j = 0; j < len; j++) {
+          if(sDocs[i]._id === docs[j].targetId) {
+            docs[j].sessionInfo = sDocs[i];
+          }
+        }
+      }
+
+      socket.emit('listContact', json(err, docs, query._cid));
+    });
+
   });
 };
 
@@ -129,14 +166,16 @@ service.message = function (socket, query, ns) {
       sessionId: session._id,
       type: query.type,
       content,
+      members,
       details: query.details || {},
     }, (err, info) => {
       if (err) {
         return socket.emit('message', errorJSON(err, query._cid));
       }
 
+      // helper.roomExist(ns,userId);
       for (let i = 0, len = members.length; i < len; i++) {
-        ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message', successJSON(info, query._cid));
+        ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message',successJSON(info,query._cid));
       }
 
     });
@@ -144,10 +183,67 @@ service.message = function (socket, query, ns) {
 };
 
 // 通过关键字检索找到用户
-service.searchUser = function (socket, query) {
+service.searchUser = function (socket, query)  {
   accountService.list(query.keyword,query.page=1, query.pageSize=20, query.sortFields='-createdTime', query.fieldNeeds, (err, rs) => {
     socket.emit('searchUser', json(err, rs, query._cid));
   })
 };
 
+// 找到两个ID的共有会话
+service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(socket,query) {
+  sessionService.getSessionByUserIdAtC2C(query.ownerId,query.targetId,(err, rs) => {
+    socket.emit('getSessionByUserIdAtC2C',json(err, rs, query._cid));
+  })
+};
+
+// 删除好友
+service.deleteContact = function deleteContact(socket,query) {
+  contactService.delete(query.ownerId,query.targetId,query.type,(err, rs) => {
+    socket.emit('deleteContact',json(err, rs, query._cid));
+  })
+};
+
+//获取session信息
+service.getSessionInfo = function (socket, query) {
+  sessionService.getSession(query.sessionId,(err, rs) => {
+    socket.emit('getSessionInfo',json(err, rs, query._cid));
+  })
+};
+
+//获取历史消息
+service.listStorage = function (socket, query) {
+  messageService.list(query.sessionId, query.page, query.pageSize || 10 , false , (err, docs) => {
+    socket.emit('listStorage', json(err, docs, query._cid));
+  })
+};
+
+// 用户删除一个会话时，将用户从这个上会话移除
+service.leaveSession = function (socket, query) {
+  sessionService.leaveSession(query.sessionId, query.userId, (err, docs) => {
+    socket.emit('leaveSession',json(err, docs, query._cid));
+  })
+};
+
+//删除一个会话
+service.deleteSession =function (socket, query) {
+  sessionService.deleteSession(query.sessionId, query.creatorId, (err, docs) => {
+    socket.emit('deleteSession',json(err, docs, query._cid));
+  });
+};
+
+//添加星标联系人
+service.setOnTopSession = function (socket, query) {
+  sessionService.setOnTopSession( query.sessionId, (err, docs) => {
+    socket.emit('setOnTopSession',json(err, docs, query._cid));
+  })
+};
+
+//获取星标联系人列表
+service.listOnTopSession = function ( socket, query ) {
+  sessionService.listOnTopSession(query.ownerId, query.page, query.pageSize, false, 'createdTime', (err, docs) => {
+    socket.emit('listOnTopSession', json(err, docs, query._cid));
+  });
+};
+
 module.exports = service;
+

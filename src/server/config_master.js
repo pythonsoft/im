@@ -12,7 +12,6 @@ config.redis_host = '10.0.15.69';
 // config.redis_host = 'localhost';
 config.redis_port = 6379;
 config.redis_opts = { auth_pass: 'phoenixtv2017' };
-// config.redis_opts = { auth_pass: '' };
 
 // 日志路径
 config.logPath = path.join(__dirname, '../logs/');
@@ -23,7 +22,6 @@ config.uploadPath = path.join(__dirname, '../../uploads/');
 // 允许跨域访问的地址列表
 config.whitelist = [
   'http://localhost:8000',
-  'http://localhost:8080',
   'http://10.0.15.105:8000',
   'http://10.0.15.101:8000',
   'http://ump.szdev.cn',
@@ -32,6 +30,6 @@ config.whitelist = [
 ];
 
 config.secret = {
-  yunXiang: 'meidaexpress',
+  yunXiang: 'BRYSJHHRHLYQQLMG',
   ump: 'secret',
 };
