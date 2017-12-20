@@ -6,9 +6,11 @@ const path = require('path');
 const socketStream = require('socket.io-stream');
 const crypto = require('crypto');
 const utils = require('../../common/utils');
+const loginMiddleware = require('../../middleware/login');
 const helper = require('../chat/helper');
 
 const config = require('../../config');
+const redisMQ = require('./redisMQ');
 
 const STORAGE_PATH = config.uploadPath;
 
@@ -141,6 +143,7 @@ const invalidRequest = function (socket, message) {
 let updateStatus = function (taskId, status, errorMessage) {
   if (!taskId) { return false; }
   const task = tasks[taskId];
+  console.log("status===>", status);
   if (task) {
     tasks[taskId].status = status;
     if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
@@ -153,7 +156,21 @@ class FileIO {
   constructor(io) {
     const fileIO = io.of('/file');
 
-    fileIO.use(helper.login);
+    // / authorize
+    fileIO.use((socket, next) => {
+      const rs = loginMiddleware.webSocketMiddleware(socket);
+
+      if (rs.status === '0') {
+        const data = rs.data;
+        socket.info = data.info;
+
+        socketIds[data.socketId] = socket.info;
+        next();
+      } else {
+        socket.emit('error', rs);
+        socket.disconnect();
+      }
+    });
 
     fileIO.on('connection', (socket) => {
       utils.console('file connection', socket.id);
@@ -161,6 +178,7 @@ class FileIO {
       let passedLength = 0;
       let headerInfo = {};
       let isConnect = true;
+      let stop = false;
 
       const showProcess = function () {
         const taskData = headerInfo.data;
@@ -196,11 +214,13 @@ class FileIO {
         show();
       };
 
-      socket.on('headerPackage', (data) => {
+      socket.on('headerPackage', (data, queueName) => {
         if (tasks[data._id]) {
           invalidRequest(socket, 'ignore task which exist.');
           return false;
         }
+
+        data.type = 'create';
 
         if (!data.name) {
           invalidRequest(socket, 'this package name is null.');
@@ -208,6 +228,16 @@ class FileIO {
         }
 
         utils.console('accept header package', data);
+
+        const rsmq = config.rsmq;
+        rsmq.sendMessage({qname: queueName, message: JSON.stringify(data)}, function (err, resp) {
+          if (err) {
+            console.log("发送消息失败===>", err);
+          }
+          if (resp) {
+            console.log("data==>", data.type);
+          }
+        });
 
         const o = {
           data,
@@ -219,10 +249,9 @@ class FileIO {
           socketId: socket.id,
         };
 
-        // socketIds[socket.id]._id = data._id;
-        socket.info.taskId = data._id;
+        socketIds[socket.id]._id = data._id;
 
-        utils.console('socket id map', socket.info.taskId);
+        utils.console('socket id map', socketIds[socket.id]);
 
         fs.mkdirSync(path.join(o.targetDir));
 
@@ -236,7 +265,7 @@ class FileIO {
       socket.on('error', (err) => {
         utils.console(`socket error socket id: ${socket.id}`, err);
         socket.disconnect();
-        updateStatus(socket.info.taskId, STATUS.error, err);
+        updateStatus(socketIds[socket.id]._id, STATUS.error, err);
       });
 
       socket.on('disconnect', () => {
@@ -244,7 +273,17 @@ class FileIO {
         utils.console(`disconnect with client :${socket.id}`);
       });
 
-      socketStream(socket).on('fileStream', (stream, data) => {
+      socket.on('stop', (data, queueName)=> {
+        data.type = 'stop';
+        stop = false;
+        setTimeout(()=>{redisMQ.sendMessage(queueName, data)}, 50);
+      })
+
+      socket.on('restart', ()=>{
+        socket.emit('transfer_package_finish', '');
+      })
+
+      socketStream(socket).on('fileStream', (stream, data, queueName) => {
         const task = tasks[data.pid];
         if (!task) {
           invalidRequest(socket, 'file stream accept data invalid.');
@@ -255,12 +294,17 @@ class FileIO {
         updateStatus(data.pid, STATUS.transfer);
 
         writeStream.on('finish', () => {
+          const type = stop ? 'stop': 'transfer';
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
+            data.type = 'error';
+            redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
           } else {
             tasks[data.pid].acceptPackagePart[data._id] = data;
+            data.type = type;
+            redisMQ.sendMessage(queueName, data);
             socket.emit('transfer_package_success', data);
           }
 
@@ -268,6 +312,8 @@ class FileIO {
 
           if (isGetAllPackage(data.pid)) {
             // get all package and compose file
+            data.type = 'complete';
+            redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.success);
 
             socket.emit('complete', '');
@@ -285,15 +331,14 @@ class FileIO {
         writeStream.on('error', (err) => {
           data.status = STATUS.error;
           data.error = err;
+          updateStatus(data.pid, STATUS.error, err, queueName, data);
         });
 
         stream.on('data', (chunk) => {
           passedLength += chunk.length;
         });
 
-        console.log('socket.info.secret --->', socket.info.secret);
-
-        if (socket.info.secret) {
+        if (socketIds[socket.id].secret) {
           const decipher = crypto.createDecipher('aes192', socket.info.key);
           stream.pipe(decipher).pipe(writeStream);
         } else {

@@ -37,7 +37,7 @@ class FileClient {
     const socket = clientConnect(`http://${me.settings.host}:${me.settings.port}/file`, {
       extraHeaders: {
         'im-ticket': utils.cipher(`${me.settings.userId}-${me.settings.isCrypto ? 1 : 0}`, me.settings.key),
-        'im-key': 'ump',
+        'im-key': 'ump'
       },
     });
 
@@ -170,9 +170,9 @@ class FileClient {
 }
 
 const fc = new FileClient({
-  host: '10.0.16.125',
+  host: '10.0.15.156',
   port: 9000,
-  filePath: '/Users/chaoningx/Downloads/Microsoft_Office_2016_15.24.0_160709_Installer.pkg',
+  filePath: '/Users/steven/Downloads/WebStorm-2016.3.6.dmg',
   concurrency: 5, // 并发
   userId: 'chaoningx',
 });

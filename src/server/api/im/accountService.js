@@ -131,6 +131,7 @@ service.list = function(keyword, page=1, pageSize=20, sortFields='-createdTime',
 
   if (keyword) {
     q.$or = [
+      { _id: { $regex: keyword, $options:'i'} },
       { name: { $regex: keyword, $options: 'i' } },
       { email: { $regex: keyword, $options: 'i' } },
       { phone: { $regex: keyword, $options: 'i' } },

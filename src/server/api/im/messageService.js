@@ -9,10 +9,12 @@ const MessageInfo = require('./messageInfo');
 
 const messageInfo = new MessageInfo();
 
+const sessionSerivce = require('./sessionService');
+
 const service = {};
 
 service.add = function (info, cb) {
-  if (utils.isEmptyObject(info)) {
+  if (!utils.isEmptyObject(info)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'info' }));
   }
 
@@ -22,11 +24,12 @@ service.add = function (info, cb) {
     sessionId: '',
     type: '',
     content: '',
+    members: [],
     details: {},
   }, info);
 
-  info._id = uuid.v1();
-  info.createTime = new Date();
+  mInfo._id = uuid.v1();
+  mInfo.createTime = new Date();
 
   if (!mInfo.sessionId && mInfo.sessionId !== 36) {
     return cb && cb(i18n.t('imMessageFieldsIsInvalid', { field: 'sessionId' }));
@@ -46,25 +49,40 @@ service.add = function (info, cb) {
     return cb && cb(i18n.t('imMessageContentTooLong'));
   }
 
-  if (utils.isEmptyObject(mInfo.from) || mInfo.from._id.length !== 36 || !utils.isValueInObject(mInfo.from.type, ContactInfo.TYPE)) {
+  if (!mInfo.from || utils.isEmptyObject(mInfo.from) || mInfo.from._id.length !== 36 || !mInfo.from || utils.isValueInObject(mInfo.from.type, ContactInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'from' }));
   }
 
-  if (utils.isEmptyObject(mInfo.from) || mInfo.to._id.length !== 36 || !utils.isValueInObject(mInfo.to.type, ContactInfo.TYPE)) {
+  if (!mInfo.to || utils.isEmptyObject(mInfo.from) || mInfo.to._id.length !== 36 || !mInfo.to || utils.isValueInObject(mInfo.to.type, ContactInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageFieldsIsNull', { field: 'to' }));
   }
 
-  if (!utils.isValueInObject(mInfo.type, MessageInfo.TYPE)) {
+  if (utils.isValueInObject(mInfo.type, MessageInfo.TYPE)) {
     return cb && cb(i18n.t('imMessageTypeIsNotExist'));
   }
 
-  messageInfo.findOneAndUpdate(mInfo, { $inc: { seq: 1 } }, { upsert: true }, (err, r) => {
+  sessionSerivce.generateSessionMessageIndex(mInfo.sessionId, (err, sInfo) => {
     if (err) {
       logger.error(err.message);
-      return cb && cb(i18n.t('databaseError'));
+      return cb && cb(err);
     }
 
-    return cb && cb(null, mInfo);
+    mInfo.seq = sInfo.messageIndex;
+    messageInfo.insertOne(mInfo, (err, r) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(err);
+      }
+
+      sessionSerivce.updateSessionModifyTime(mInfo.sessionId, (err, r) => {
+        if (err) {
+          logger.error(err.message);
+          return cb && cb(err);
+        }
+
+        return cb && cb(null, mInfo);
+      });
+    });
   });
 };
 
