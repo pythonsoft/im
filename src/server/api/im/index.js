@@ -131,7 +131,7 @@ router.post('/sync', (req, res) => {
     name,
     photo,
     email,
-    phone
+    phone,
   }, (err, r) => res.json(result.json(err, r)));
 });
 

@@ -34,6 +34,7 @@ class MessageInfo extends DB {
         },
         default: () => MessageInfo.TYPE.C2C },
       createdTime: { type: 'date', validation: 'require', allowUpdate: false },
+      members: { type: 'array' },
       content: { type: 'string' },
       details: { type: 'object' },
     };

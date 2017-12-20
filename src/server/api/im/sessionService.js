@@ -33,6 +33,7 @@ service.getRecentContactList = function getRecentContactList(userId, page = 1, p
 };
 
 service.createSession = function createSession(creatorId, info, cb) {
+
   if (!creatorId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'creatorId' }));
   }
@@ -46,7 +47,6 @@ service.createSession = function createSession(creatorId, info, cb) {
     type: '',
     members: '',
   }, info);
-
   sInfo._id = uuid.v1();
   const t = new Date();
   sInfo.createdTime = t;
@@ -62,21 +62,19 @@ service.createSession = function createSession(creatorId, info, cb) {
   }
 
   if (!sInfo.type || !utils.isValueInObject(sInfo.type, SessionInfo.TYPE)) {
+
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'type' }));
   }
-
   accountService.getUsers(sInfo.members, (err, users) => {
     if (err) {
       return cb && cb(err);
     }
 
     sInfo.members = users;
-
     sessionInfo.insertOne(sInfo, (err) => {
       if (err) {
         return cb && cb(err);
       }
-
       return cb && cb(null, sInfo);
     });
   });
@@ -138,7 +136,7 @@ service.leaveSession = function (sessionId, userId, cb) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'userId' }));
   }
 
-  sessionInfo.collection.updateOne({ _id: sessionId }, { $pull: { 'members._id': userId } }, (err, r) => {
+  sessionInfo.collection.updateOne({ _id: sessionId }, { $pull: { 'members': { _id: userId } } }, (err, r) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
@@ -149,22 +147,40 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
+  console.log('11111111',sessionId);
+
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
 
-  sessionInfo.collection.findOne({ _id: sessionId }, (err, doc) => {
-    if (err) {
-      logger.error(err.message);
-      return cb && cb(i18n.t('databaseError'));
-    }
+  if(sessionId.constructor === Array) {
+    sessionInfo.collection.find({ _id: { $in: sessionId } }).toArray((err, docs) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(i18n.t('databaseError'));
+      }
 
-    if (!docs) {
-      return cb && cb(i18n.t('imSessionIsNotExist'));
-    }
+      if (docs.length === 0) {
+        return cb && cb(i18n.t('imSessionIsNotExist'));
+      }
 
-    return cb && cb(null, doc);
-  });
+      return cb && cb(null, docs);
+    });
+  }else {
+    sessionInfo.collection.findOne({ _id: sessionId }, (err, doc) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(i18n.t('databaseError'));
+      }
+
+      if (!doc) {
+        return cb && cb(i18n.t('imSessionIsNotExist'));
+      }
+
+      return cb && cb(null, doc);
+    });
+  }
+
 };
 
 /**
@@ -193,6 +209,107 @@ service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(meId, targetI
     }
 
     return cb && cb(null, doc);
+  });
+};
+
+service.deleteSession =function deleteSession(sessionId, creatorId, cb) {
+  if(!sessionId){
+    return console.log('deleteError1');
+  }
+
+  if(!creatorId){
+    return console.log('deleteError2');
+  }
+
+  sessionInfo.collection.deleteOne({
+    _id:sessionId,
+    creatorId:creatorId,
+  },(err,doc) => {
+    if(err){
+      logger.errror(err.message);
+      return cb && cb(i18n.t('databaseError'))
+    }
+
+    if(!doc) {
+      return cb && cb(i18n.t('imSessionIsNotExist'));
+    }
+
+    return cb && cb(null, doc);
+  })
+};
+
+service.generateSessionMessageIndex = function (sessionId, cb) {
+  if (!sessionId) {
+    return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
+  }
+
+  sessionInfo.collection.findOneAndUpdate(
+    { _id: sessionId },
+    { $inc: { messageIndex: 1 } },
+    {
+      returnOriginal: false,
+      projection: {
+        _id: 1,
+        messageIndex: 1
+      }
+    }, (err, r) => {
+      if (err) {
+        logger.error(err.message);
+        return cb && cb(i18n.t('databaseError'));
+      }
+
+      return cb && cb(null, r.value);
+  });
+}
+
+service.updateSessionModifyTime = function(sessionId, cb) {
+  if (!sessionId) {
+    return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
+  }
+
+  sessionInfo.collection.updateOne({ _id: sessionId }, { $set: { modifyTime: new Date() } }, (err, r) => {
+    if (err) {
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    return cb && cb(null, r);
+  });
+};
+
+service.listOnTopSession = function (userId, page = 1, pageSize = 50, fieldNeeds, sort = 'createdTime', cb) {
+  if (!userId) {
+    return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'userId' }));
+  }
+
+  sessionInfo.pagination({
+    'members._id': userId,
+    'isOnTop': true
+  }, page, pageSize, (err, docs) => {
+    if (err) {
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    return cb && cb(null, docs);
+  }, sort, fieldNeeds);
+};
+
+service.setOnTopSession = function (sessionId, cb) {
+  if (!sessionId) {
+    return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
+  }
+
+  sessionInfo.collection.updateOne({ _id: sessionId }, { $set: {
+    onTopCreatedTime: new Date(),
+    isOnTop: true,
+  }}, (err, r) => {
+    if (err) {
+      logger.error(err.message);
+      return cb && cb(i18n.t('databaseError'));
+    }
+
+    return cb && cb(null, r);
   });
 };
 

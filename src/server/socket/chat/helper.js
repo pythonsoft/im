@@ -18,7 +18,7 @@ const getRoomName = function (name, type) {
 helper.login = function (socket, next) {
   const rs = loginMiddleware.webSocketMiddleware(socket);
   console.log('login --->', rs);
-
+  console.log('status----->',rs.status);
   if (rs.status === '0') {
     const data = rs.data;
     socket.info = data.info;
