@@ -276,7 +276,7 @@ class FileIO {
       socket.on('stop', (data, queueName)=> {
         data.type = 'stop';
         stop = false;
-        setTimeout(()=>{redisMQ.sendMessage(queueName, data)}, 50);
+        //setTimeout(()=>{redisMQ.sendMessage(queueName, data)}, 50);
       })
 
       socket.on('restart', ()=>{
@@ -298,13 +298,13 @@ class FileIO {
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
             data.type = 'error';
-            redisMQ.sendMessage(queueName, data);
+            //redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
           } else {
             tasks[data.pid].acceptPackagePart[data._id] = data;
             data.type = type;
-            redisMQ.sendMessage(queueName, data);
+            //redisMQ.sendMessage(queueName, data);
             socket.emit('transfer_package_success', data);
           }
 
