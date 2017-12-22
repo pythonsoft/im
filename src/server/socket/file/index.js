@@ -179,6 +179,7 @@ class FileIO {
       let headerInfo = {};
       let isConnect = true;
       let stop = false;
+      let tranferStartTime = 0;
 
       const showProcess = function () {
         const taskData = headerInfo.data;
@@ -259,6 +260,7 @@ class FileIO {
         headerInfo = Object.assign({}, o);
 
         socket.emit('transfer_start');
+        tranferStartTime = Date.now();
         showProcess();
       });
 
@@ -276,7 +278,7 @@ class FileIO {
       socket.on('stop', (data, queueName)=> {
         data.type = 'stop';
         stop = false;
-        setTimeout(()=>{redisMQ.sendMessage(queueName, data)}, 50);
+        //setTimeout(()=>{redisMQ.sendMessage(queueName, data)}, 50);
       })
 
       socket.on('restart', ()=>{
@@ -298,13 +300,13 @@ class FileIO {
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
             data.type = 'error';
-            redisMQ.sendMessage(queueName, data);
+            //redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
           } else {
             tasks[data.pid].acceptPackagePart[data._id] = data;
             data.type = type;
-            redisMQ.sendMessage(queueName, data);
+            //redisMQ.sendMessage(queueName, data);
             socket.emit('transfer_package_success', data);
           }
 
@@ -313,6 +315,10 @@ class FileIO {
           if (isGetAllPackage(data.pid)) {
             // get all package and compose file
             data.type = 'complete';
+            const taskData = headerInfo.data;
+            const totalSize = taskData.size;
+            const totalTime = Date.now() - tranferStartTime;
+            data.speed = totalTime ? utils.formatSize(totalSize*1000/totalTime) + '/s' : '';
             redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.success);
 
