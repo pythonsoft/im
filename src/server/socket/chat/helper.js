@@ -47,7 +47,7 @@ helper.ensureInRoom = function joinRoom(ns, socket, userId, successFn) {
 
     // 当前socket没有在用户的房间里
     if (clients.indexOf(socket.id) === -1) {
-      accountService.login(userId, (err, ticket, doc) => {
+      accountService.login(userId, (err, doc) => {
         if (err) {
           socket.emit('login', result.fail(err));
           socket.disconnect();
@@ -56,6 +56,7 @@ helper.ensureInRoom = function joinRoom(ns, socket, userId, successFn) {
 
         ns.adapter.remoteJoin(socket.id, userRoomName, (err) => {
           if (err) {
+            console.log('remote join error -->', err);
             logger.error(err.message);
             socket.emit('login', result.fail('unknown socket id, join room fail.'));
             socket.disconnect();
@@ -64,6 +65,7 @@ helper.ensureInRoom = function joinRoom(ns, socket, userId, successFn) {
 
           socket.accountInfo = doc;
           socket.emit('login', result.success(socket.accountInfo));
+
           console.log('join -->', socket.accountInfo.name);
 
           return successFn && successFn();

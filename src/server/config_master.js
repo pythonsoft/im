@@ -5,7 +5,7 @@ config.dbName = 'im';
 
 config.mongodb = {
   // [`${config.dbName}URL`]: `mongodb://localhost:27017/${config.dbName === 'ump' ? 'ump_v1' : 'ump_test'}`,
-  [`${config.dbName}URL`]: `mongodb://10.0.15.62:27017/${config.dbName === 'im' ? 'im_v1' : 'im_test'}`,
+  [`${config.dbName}URL`]: `mongodb://10.0.15.62:27017/${config.dbName === 'im' ? 'im_ump_v1' : 'im_ump_test'}`,
 };
 
 config.redis_host = '10.0.15.69';
@@ -22,7 +22,6 @@ config.uploadPath = path.join(__dirname, '../../uploads/');
 // 允许跨域访问的地址列表
 config.whitelist = [
   'http://localhost:8000',
-  'http://localhost:8080',
   'http://10.0.15.105:8000',
   'http://10.0.15.101:8000',
   'http://ump.szdev.cn',
@@ -31,6 +30,6 @@ config.whitelist = [
 ];
 
 config.secret = {
-  yunXiang: 'meidaexpress',
+  yunXiang: 'BRYSJHHRHLYQQLMG',
   ump: 'secret',
 };
