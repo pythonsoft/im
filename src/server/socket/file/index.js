@@ -179,6 +179,7 @@ class FileIO {
       let headerInfo = {};
       let isConnect = true;
       let stop = false;
+      let tranferStartTime = 0;
 
       const showProcess = function () {
         const taskData = headerInfo.data;
@@ -259,6 +260,7 @@ class FileIO {
         headerInfo = Object.assign({}, o);
 
         socket.emit('transfer_start');
+        tranferStartTime = Date.now();
         showProcess();
       });
 
@@ -313,6 +315,10 @@ class FileIO {
           if (isGetAllPackage(data.pid)) {
             // get all package and compose file
             data.type = 'complete';
+            const taskData = headerInfo.data;
+            const totalSize = taskData.size;
+            const totalTime = Date.now() - tranferStartTime;
+            data.speed = totalTime ? utils.formatSize(totalSize*1000/totalTime) + '/s' : '';
             redisMQ.sendMessage(queueName, data);
             updateStatus(data.pid, STATUS.success);
 
