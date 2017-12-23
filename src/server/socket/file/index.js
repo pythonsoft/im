@@ -9,6 +9,9 @@ const utils = require('../../common/utils');
 const loginMiddleware = require('../../middleware/login');
 const helper = require('../chat/helper');
 
+const request = require('request');
+const mime = require('mime');
+
 const config = require('../../config');
 const redisMQ = require('./redisMQ');
 
@@ -159,7 +162,7 @@ class FileIO {
     // / authorize
     fileIO.use((socket, next) => {
       const rs = loginMiddleware.webSocketMiddleware(socket);
-
+      console.log('fileIO -->', rs);
       if (rs.status === '0') {
         const data = rs.data;
         socket.info = data.info;
@@ -167,7 +170,7 @@ class FileIO {
         socketIds[data.socketId] = socket.info;
         next();
       } else {
-        socket.emit('error', rs);
+        // socket.emit('error', rs);
         socket.disconnect();
       }
     });
@@ -231,7 +234,8 @@ class FileIO {
         utils.console('accept header package', data);
 
         const rsmq = config.rsmq;
-        rsmq.sendMessage({qname: queueName, message: JSON.stringify(data)}, function (err, resp) {
+
+        rsmq.sendMessage({ qname: queueName, message: JSON.stringify(data) }, function (err, resp) {
           if (err) {
             console.log("发送消息失败===>", err);
           }
@@ -240,28 +244,68 @@ class FileIO {
           }
         });
 
-        const o = {
-          data,
-          targetDir: path.join(STORAGE_PATH, data._id),
-          status: STATUS.start,
-          acceptPackagePart: {},
-          filePath: '',
-          error: '',
-          socketId: socket.id,
-        };
+        request.post('http://localhost:8099/mzapi/createWorkflow').form({
+          name: data.name,
+          originPath: '----',
+          rootPath: config.uploadPath,
+          storagePath: config.uploadPath,
+          size: data.size,
+          contentType: mime.getExtension(path.extname(data.name)),
+          token: socket.info.ticket
+        }, (err, httpResponse, body) => {
+          if (err) {
+            console.log('request error -->', err);
+            return socket.emit('error', err.message);
+          }
 
-        socketIds[socket.id]._id = data._id;
+          console.log('httpResponse --->', body);
 
-        utils.console('socket id map', socketIds[socket.id]);
+          const o = {
+            data,
+            targetDir: path.join(STORAGE_PATH, data._id),
+            status: STATUS.start,
+            acceptPackagePart: {},
+            filePath: '',
+            error: '',
+            socketId: socket.id,
+          };
 
-        fs.mkdirSync(path.join(o.targetDir));
+          socketIds[socket.id]._id = data._id;
 
-        tasks[data._id] = Object.assign({}, o);
-        headerInfo = Object.assign({}, o);
+          utils.console('socket id map', socketIds[socket.id]);
 
-        socket.emit('transfer_start');
-        tranferStartTime = Date.now();
-        showProcess();
+          fs.mkdirSync(path.join(o.targetDir));
+
+          tasks[data._id] = Object.assign({}, o);
+          headerInfo = Object.assign({}, o);
+
+          socket.emit('transfer_start');
+          tranferStartTime = Date.now();
+          showProcess();
+        });
+
+        // const o = {
+        //   data,
+        //   targetDir: path.join(STORAGE_PATH, data._id),
+        //   status: STATUS.start,
+        //   acceptPackagePart: {},
+        //   filePath: '',
+        //   error: '',
+        //   socketId: socket.id,
+        // };
+        //
+        // socketIds[socket.id]._id = data._id;
+        //
+        // utils.console('socket id map', socketIds[socket.id]);
+        //
+        // fs.mkdirSync(path.join(o.targetDir));
+        //
+        // tasks[data._id] = Object.assign({}, o);
+        // headerInfo = Object.assign({}, o);
+        //
+        // socket.emit('transfer_start');
+        // tranferStartTime = Date.now();
+        // showProcess();
       });
 
       socket.on('error', (err) => {

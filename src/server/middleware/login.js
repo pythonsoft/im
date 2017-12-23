@@ -22,7 +22,7 @@ login.isLogin = function isLogin(req) {
     || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
     || (req.body && req.body[TICKET_COOKIE_NAME]);
 
-  console.log(ticket, sk);
+  console.log('isLogin ===>', ticket, sk);
   if (!ticket) {
     return false;
   }
@@ -110,7 +110,7 @@ login.webSocketMiddleware = function (socket) {
       secret = secret === '1' ? '1' : '0';
 
       if (userId) {
-        return result.success({ socketId: socket.id, info: { userId, secret: secret === '1', key } });
+        return result.success({ socketId: socket.id, info: { userId, secret: secret === '1', key, ticket: authorize } });
       }
       return result.fail(i18n.t('imAuthorizeInvalid'));
     } catch (e) {

@@ -32,4 +32,5 @@ config.whitelist = [
 config.secret = {
   yunXiang: 'BRYSJHHRHLYQQLMG',
   ump: 'secret',
+  mediaexpress: 'meidaexpress'
 };
