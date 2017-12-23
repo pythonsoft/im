@@ -76,6 +76,8 @@ login.webSocketMiddleware = function (socket) {
     || utils.formatCookies(socket.request.headers.cookie)[TICKET_COOKIE_NAME]
     || socket.handshake.query[TICKET_COOKIE_NAME];
 
+  console.log('cookie -->', socket.request.headers.cookie);
+
   let secret = socket.request.headers['im-secret'] || '0';
   let key = socket.request.headers['im-key'] || socket.handshake.query['im-key'] || 'yunXiang';
 
@@ -93,24 +95,26 @@ login.webSocketMiddleware = function (socket) {
   }
 
   if (authorize) {
-    console.log('1',authorize);
     try {
       const dec = utils.decipher(authorize, secretKey);
       console.log("dec==>", dec);
       const codes = dec.split(',');
       const userId = codes[0];
-      const expireDate = codes[1];
-
-      const now = new Date().getTime();
-
-      if (expireDate < now) { // 过期
-        return result.fail(i18n.t('imLoginDateExpire'));
-      }
 
       secret = secret === '1' ? '1' : '0';
 
       if (userId) {
-        return result.success({ socketId: socket.id, info: { userId, secret: secret === '1', key, ticket: authorize } });
+        return result.success({
+          socketId: socket.id,
+          info: {
+            key,
+            userId,
+            secret: secret === '1',
+            ticket: authorize,
+            queueName: config.queueName[key],
+            cryptoKey: config.cryptoKey[key] || ''
+          }
+        });
       }
       return result.fail(i18n.t('imAuthorizeInvalid'));
     } catch (e) {

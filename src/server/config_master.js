@@ -29,8 +29,4 @@ config.whitelist = [
   'http://localhost.szdev.cn:8000',
 ];
 
-config.secret = {
-  yunXiang: 'BRYSJHHRHLYQQLMG',
-  ump: 'secret',
-  mediaexpress: 'meidaexpress'
-};
+

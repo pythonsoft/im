@@ -28,12 +28,25 @@ config.cookieExpires = 1000 * 60 * 60 * 24 * 7; // cookie有效期七天
 config.redisExpires = 1 * 60 * 60 * 12; // redis有效期12小时
 config.port = 9000;
 
+//用于登录时验证身份
 config.secret = {
   yunXiang: 'BRYSJHHRHLYQQLMG',
   ump: 'secret',
+  mediaexpress: 'meidaexpress'
 };
 
-config.umpAssistQueueName = 'ump-assist-queue';
+//用于加密传输时的解密
+config.cryptoKey = {
+  yunXiang: 'china2008',
+  ump: 'china2009',
+  mediaexpress: 'china2010',
+};
+
+config.queueName = {};
+
+for(let k in config.secret) {
+  config.queueName[k] = k + '-assist-queue'
+}
 
 const init = function init() {
   const redisClient = redis.createClient(config.redis_port, config.redis_host, config.redis_opts);
@@ -44,23 +57,40 @@ const init = function init() {
 
   redisClient.on('ready', () => {
     console.log('Redis Connect Success!');
+    initRedisMQ();
   });
 
   config.redisClient = redisClient;
 };
 
-const initRedisMQ = function initRedisMQ(){
+const initRedisMQ = function initRedisMQ(cb) {
   const rsmq = new RedisMQ({ client: config.redisClient, ns: 'rsmq'});
-  rsmq.createQueue({qname: config.umpAssistQueueName}, function (err, resp) {
-    if(err){
-      console.log("创建消息队列失败===>", err);
+  const keys = Object.keys(config.queueName);
+
+  const createQueue = function(index) {
+    let name = keys[index];
+
+    if(!name) {
+      console.log(`消息队列创建完成`);
+      config.rsmq = rsmq;
+      return cb && cb ();
     }
-    if (resp===1) {
-      console.log("queue created")
-    }
-  });
-  config.rsmq = rsmq;
-}
+
+    rsmq.createQueue({ qname: config.queueName[name] }, function (err, resp) {
+      if (err) {
+        console.log(`创建 ${config.queueName[name]} 消息队列失败 ${err}`);
+      }
+
+      if (resp === 1) {
+        console.log(`${config.queueName[name]} 消息队列成功`);
+      }
+
+      createQueue(index + 1);
+    });
+  };
+
+  createQueue(0);
+};
 
 const readConfig = function readConfig(p) {
   const sandbox = {
@@ -78,13 +108,11 @@ if (fs.existsSync(configPath)) {
   // 读取生产环境config_master.js文件
   readConfig(configPath);
   init();
-  initRedisMQ();
 } else if (process.env.NODE_ENV === 'development') { // 本地开发环境
   readConfig(path.join(__dirname, './config_master.js'));
   config.host = `localhost:${config.port}`;
   config.domain = `http://${config.host}`;
   init();
-  initRedisMQ();
 } else {
   throw new Error('******** config_master.js file is not exist ********');
 }
