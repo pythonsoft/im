@@ -47,18 +47,14 @@ const STATUS = {
   error: 1000,
 };
 
-const socketIds = {};
-const tasks = {};
-
-const isGetAllPackage = function (taskId) {
-  let flag = true;
-  const task = tasks[taskId];
+const isGetAllPackage = function (task) {
   if (!task) {
     throw new Error('task is not exist.');
   }
 
   const order = task.data.order;
   const acceptPackagePart = task.acceptPackagePart;
+  let flag = true;
 
   for (let i = 0, len = order.length; i < len; i++) {
     if (!acceptPackagePart[order[i]]) {
@@ -70,8 +66,9 @@ const isGetAllPackage = function (taskId) {
   return flag;
 };
 
-const composeFile = function (taskId, successFn) {
-  const task = tasks[taskId];
+const composeFile = function (task, successFn) {
+  const taskId = task.data._id;
+
   if (!task) {
     throw new Error('task is not exist.');
   }
@@ -81,7 +78,7 @@ const composeFile = function (taskId, successFn) {
   const filePath = path.join(STORAGE_PATH, taskId, name);
   const len = order.length;
 
-  updateStatus(taskId, STATUS.composeStart);
+  updateStatus(task, STATUS.composeStart);
 
   const writeFile = function (index, start) {
     const packagePartId = order[index];
@@ -92,17 +89,16 @@ const composeFile = function (taskId, successFn) {
 
     ws.on('error', (err) => {
       utils.console('write file to storage fail', err);
-      updateStatus(taskId, STATUS.composeError, err);
+      updateStatus(task, STATUS.composeError, err);
     });
 
     ws.on('finish', () => {
       if (index < len - 1) {
-        updateStatus(taskId, STATUS.compose);
+        updateStatus(task, STATUS.compose);
         writeFile(index + 1, start + packageInfo.size);
       } else {
         task.filePath = filePath;
-        tasks[taskId] = Object.assign({}, task);
-        updateStatus(taskId, STATUS.composeSuccess);
+        updateStatus(task, STATUS.composeSuccess);
         utils.console('compose file success');
         successFn && successFn();
       }
@@ -114,8 +110,9 @@ const composeFile = function (taskId, successFn) {
   writeFile(0, 0);
 };
 
-const removePackageParts = function (taskId, callback) {
-  const task = tasks[taskId];
+const removePackageParts = function (task, callback) {
+  const taskId = task.data._id;
+
   if (!task) {
     throw new Error('task is not exist.');
   }
@@ -126,21 +123,22 @@ const removePackageParts = function (taskId, callback) {
 
     if (!partId) {
       utils.console('remove package parts success');
-      updateStatus(taskId, STATUS.removePackageSuccess);
+      updateStatus(task, STATUS.removePackageSuccess);
       callback && callback();
       return false;
     }
 
     const fp = path.join(STORAGE_PATH, taskId, partId);
+
     if (fs.existsSync(fp)) {
-      updateStatus(taskId, STATUS.removePackagePart);
+      updateStatus(task, STATUS.removePackagePart);
       fs.unlinkSync(fp);
     }
 
     del(index + 1);
   };
 
-  updateStatus(taskId, STATUS.removePackagePartStart);
+  updateStatus(task, STATUS.removePackagePartStart);
   del(0);
 };
 
@@ -149,15 +147,16 @@ const invalidRequest = function (socket, message) {
   socket.disconnect();
 };
 
-let updateStatus = function (taskId, status, errorMessage) {
-  if (!taskId) { return false; }
-  const task = tasks[taskId];
+let updateStatus = function (task, status, errorMessage) {
+  task.status = status;
 
-  if (task) {
-    tasks[taskId].status = status;
-    if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
-      tasks[taskId].error = errorMessage.message ? errorMessage.message : errorMessage.toString();
-    }
+  if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
+    task.error = errorMessage.message ? errorMessage.message : errorMessage.toString();
+  }
+
+  if (status === STATUS.success) {
+    //todo
+
   }
 };
 
@@ -172,11 +171,10 @@ class FileIO {
       if (rs.status === '0') {
         const data = rs.data;
         socket.info = data.info;
-
-        socketIds[data.socketId] = socket.info;
+        socket.task = data.task;
         next();
       } else {
-        // socket.emit('error', rs);
+        socket.emit('error', rs.result);
         socket.disconnect();
       }
     });
@@ -185,13 +183,12 @@ class FileIO {
       utils.console('file connection', socket.id);
 
       let passedLength = 0;
-      let headerInfo = {};
       let isConnect = true;
       let stop = false;
       let transferStartTime = 0;
 
       const showProcess = function () {
-        const taskData = headerInfo.data;
+        const taskData = socket.task.data;
         const totalSize = taskData.size;
         const startTime = Date.now();
         const interval = 5000;
@@ -226,12 +223,22 @@ class FileIO {
       };
 
       socket.on('headerPackage', (data) => {
-        if (tasks[data._id]) {
-          invalidRequest(socket, 'ignore task which exist.');
+        if(!data || utils.isEmptyObject(data)) {
+          invalidRequest(socket, 'header package data is invalid');
           return false;
         }
 
-        data.type = 'create';
+        if(typeof data._id === 'undefined' || typeof data.size === 'undefined' || typeof data.name === 'undefined') {
+          invalidRequest(socket, 'header package data must include param _id name size');
+          return false;
+        }
+
+        console.log('socket header package -->', socket.task);
+
+        if (socket.task._id === data._id) {
+          invalidRequest(socket, 'ignore task which exist.');
+          return false;
+        }
 
         if (!data.name) {
           invalidRequest(socket, 'this package name is null.');
@@ -241,7 +248,9 @@ class FileIO {
         utils.console('accept header package', data);
         utils.console('socket.info.queueName', socket.info.queueName);
 
-        const headerPackageInfo = {
+        data.type = 'create';
+
+        const mainTaskInfo = {
           data,
           targetDir: path.join(STORAGE_PATH, data._id),
           status: STATUS.start,
@@ -252,22 +261,17 @@ class FileIO {
         };
 
         //创建上传任务回调调用
-        factoryInterface(socket.info.key).createTask(socket, headerPackageInfo, (err, rs) => {
+        factoryInterface(socket.info.key).createTask(socket, mainTaskInfo, (err, rs) => {
           if (err) {
             socket.emit('error', err);
             socket.disconnect();
             return false;
           }
 
-          socketIds[socket.id]._id = data._id;
+          utils.console('socket id map', socket.info);
 
-          utils.console('socket id map', socketIds[socket.id]);
-
-          fs.mkdirSync(path.join(headerPackageInfo.targetDir));
-
-          tasks[data._id] = Object.assign({}, headerPackageInfo);
-          headerInfo = Object.assign({}, headerPackageInfo);
-
+          fs.mkdirSync(path.join(mainTaskInfo.targetDir));
+          socket.task =  Object.assign({}, mainTaskInfo);
           socket.emit('transfer_start');
           transferStartTime = Date.now();
 
@@ -279,7 +283,7 @@ class FileIO {
       socket.on('error', (err) => {
         utils.console(`socket error socket id: ${socket.id}`, err);
         socket.disconnect();
-        updateStatus(socketIds[socket.id]._id, STATUS.error, err);
+        updateStatus(socket.task, STATUS.error, err);
       });
 
       socket.on('disconnect', () => {
@@ -297,48 +301,52 @@ class FileIO {
       });
 
       socketStream(socket).on('fileStream', (stream, data) => {
-        const task = tasks[data.pid];
+        const task = socket.task;
+
         if (!task) {
           invalidRequest(socket, 'file stream accept data invalid.');
         }
 
         const filename = path.join(task.targetDir, data._id);
         const writeStream = fs.createWriteStream(filename);
-        updateStatus(data.pid, STATUS.transfer);
+        updateStatus(socket.task, STATUS.transfer);
 
         writeStream.on('finish', () => {
           const type = stop ? 'stop': 'transfer';
+
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
             data.type = 'error';
-            updateStatus(data.pid, STATUS.error, data.error);
+            updateStatus(socket.task, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
-          } else {
-            tasks[data.pid].acceptPackagePart[data._id] = data;
-            data.type = type;
-            socket.emit('transfer_package_success', data);
+            return false;
           }
 
+          socket.task.acceptPackagePart[data._id] = data;
+          data.type = type;
+
+          socket.emit('transfer_package_success', data);
           socket.emit('transfer_package_finish', data);
 
-          if (isGetAllPackage(data.pid)) {
+          if (isGetAllPackage(socket.task)) {
             // get all package and compose file
-            data.type = 'complete';
-            const taskData = headerInfo.data;
-            const totalSize = taskData.size;
+            const totalSize = socket.task.data.size;
             const totalTime = Date.now() - transferStartTime;
+
+            data.type = 'complete';
             data.speed = totalTime ? utils.formatSize(totalSize*1000/totalTime) + '/s' : '';
+
             console.log('speed -->', data);
             redisMQ.sendMessage(socket.info.queueName, data);
-            updateStatus(data.pid, STATUS.success);
+            updateStatus(socket.task, STATUS.success);
 
             socket.emit('complete', '');
             socket.disconnect();
 
             utils.console('compose file');
-            composeFile(data.pid, () => {
-              removePackageParts(data.pid, () => {
-                updateStatus(data.pid, STATUS.success);
+            composeFile(socket.task, () => {
+              removePackageParts(socket.task, () => {
+                updateStatus(socket.task, STATUS.success);
               });
             });
           }
@@ -347,14 +355,14 @@ class FileIO {
         writeStream.on('error', (err) => {
           data.status = STATUS.error;
           data.error = err;
-          updateStatus(data.pid, STATUS.error, err, socket.info.queueName, data);
+          updateStatus(socket.task, STATUS.error, err, socket.info.queueName, data);
         });
 
         stream.on('data', (chunk) => {
           passedLength += chunk.length;
         });
 
-        if (socketIds[socket.id].secret) {
+        if (socket.info.secret) {
           const decipher = crypto.createDecipher('aes192', socket.info.cryptoKey);
           stream.pipe(decipher).pipe(writeStream);
         } else {

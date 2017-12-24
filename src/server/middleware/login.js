@@ -99,6 +99,7 @@ login.webSocketMiddleware = function (socket) {
       if (userId) {
         return result.success({
           socketId: socket.id,
+          task: {},
           info: {
             key,
             userId,
