@@ -7,17 +7,23 @@ const socketStream = require('socket.io-stream');
 const crypto = require('crypto');
 const utils = require('../../common/utils');
 const loginMiddleware = require('../../middleware/login');
-const helper = require('../chat/helper');
-
-const request = require('request');
-const mime = require('mime');
 
 const config = require('../../config');
 const redisMQ = require('./redisMQ');
-
 const STORAGE_PATH = config.uploadPath;
-
 const isStorageExist = fs.existsSync(STORAGE_PATH);
+
+const mediaExpressAPI = require('../../module/mediaExpress');
+const umpAPI = require('../../module/ump');
+
+const factoryInterface = function(key) {
+  const interfaces = {
+    'mediaexpress': mediaExpressAPI,
+    'ump': umpAPI
+  };
+
+  return interfaces[key];
+};
 
 if (!isStorageExist) {
   utils.console('storage dir created');
@@ -146,6 +152,7 @@ const invalidRequest = function (socket, message) {
 let updateStatus = function (taskId, status, errorMessage) {
   if (!taskId) { return false; }
   const task = tasks[taskId];
+
   if (task) {
     tasks[taskId].status = status;
     if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
@@ -186,9 +193,10 @@ class FileIO {
       const showProcess = function () {
         const taskData = headerInfo.data;
         const totalSize = taskData.size;
-        let lastSize = 0;
         const startTime = Date.now();
         const interval = 5000;
+
+        let lastSize = 0;
 
         const show = function () {
           let percent = Math.ceil((passedLength / totalSize) * 100);
@@ -233,18 +241,7 @@ class FileIO {
         utils.console('accept header package', data);
         utils.console('socket.info.queueName', socket.info.queueName);
 
-        const rsmq = config.rsmq;
-
-        rsmq.sendMessage({ qname: socket.info.queueName, message: JSON.stringify(data) }, function (err, resp) {
-          if (err) {
-            console.log("发送消息失败===>", err);
-          }
-          if (resp) {
-            console.log("data==>", data.type);
-          }
-        });
-
-        const o = {
+        const headerPackageInfo = {
           data,
           targetDir: path.join(STORAGE_PATH, data._id),
           status: STATUS.start,
@@ -254,58 +251,27 @@ class FileIO {
           socketId: socket.id,
         };
 
-        request.post({
-          url: 'http://10.0.14.134:8099/mzapi/createWorkflow',
-          headers: {
-            ticket: socket.info.ticket
-          },
-          form: {
-            name: data.name,
-            originPath: '----',
-            rootPath: config.uploadPath,
-            storagePath: o.targetDir,
-            size: data.size,
-            contentType: mime.getType(path.extname(data.name))
-          }
-        }, (err, httpResponse, body) => {
+        //创建上传任务回调调用
+        factoryInterface(socket.info.key).createTask(socket, headerPackageInfo, (err, rs) => {
           if (err) {
-            return socket.emit('error', err.message);
-          }
-
-          if(!body) {
-            //todo return error message
+            socket.emit('error', err);
             socket.disconnect();
             return false;
           }
 
-          try {
-            const rs = JSON.parse(body);
+          socketIds[socket.id]._id = data._id;
 
-            console.log('rs -->', rs);
+          utils.console('socket id map', socketIds[socket.id]);
 
-            if(rs.status !== 0) {
-              //todo error message should be return
-              socket.disconnect();
-              return false;
-            }
+          fs.mkdirSync(path.join(headerPackageInfo.targetDir));
 
-            socketIds[socket.id]._id = data._id;
+          tasks[data._id] = Object.assign({}, headerPackageInfo);
+          headerInfo = Object.assign({}, headerPackageInfo);
 
-            utils.console('socket id map', socketIds[socket.id]);
+          socket.emit('transfer_start');
+          transferStartTime = Date.now();
 
-            fs.mkdirSync(path.join(o.targetDir));
-
-            tasks[data._id] = Object.assign({}, o);
-            headerInfo = Object.assign({}, o);
-
-            socket.emit('transfer_start');
-            transferStartTime = Date.now();
-            showProcess();
-          }catch (e) {
-            socket.disconnect();
-            return false;
-          }
-
+          showProcess();
         });
 
       });

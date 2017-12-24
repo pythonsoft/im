@@ -29,4 +29,7 @@ config.whitelist = [
   'http://localhost.szdev.cn:8000',
 ];
 
-
+//文件上传服务回调地址
+config.callbackAPIHOST = {
+  mediaexpress: 'http://10.0.14.134:8099'
+};

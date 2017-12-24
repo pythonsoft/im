@@ -22,7 +22,6 @@ login.isLogin = function isLogin(req) {
     || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
     || (req.body && req.body[TICKET_COOKIE_NAME]);
 
-  console.log('isLogin ===>', ticket, sk);
   if (!ticket) {
     return false;
   }
@@ -76,13 +75,8 @@ login.webSocketMiddleware = function (socket) {
     || utils.formatCookies(socket.request.headers.cookie)[TICKET_COOKIE_NAME]
     || socket.handshake.query[TICKET_COOKIE_NAME];
 
-  console.log('cookie -->', socket.request.headers.cookie);
-
   let secret = socket.request.headers['im-secret'] || '0';
   let key = socket.request.headers['im-key'] || socket.handshake.query['im-key'] || 'yunXiang';
-
-  console.log('authorize===>', authorize);
-  console.log('key===>', key);
 
   if (!key) {
     return result.fail(i18n.t('imAuthorizeInvalid'));
@@ -97,7 +91,6 @@ login.webSocketMiddleware = function (socket) {
   if (authorize) {
     try {
       const dec = utils.decipher(authorize, secretKey);
-      console.log("dec==>", dec);
       const codes = dec.split(',');
       const userId = codes[0];
 
