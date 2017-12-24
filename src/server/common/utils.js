@@ -479,4 +479,25 @@ utils.formatSize = function (size, isNeedUnit) {
   return isNeedUnit ? { size: str, unit } : (`${str} ${unit}`);
 };
 
+utils.formatRequestResult = function(data) {
+  let err = null;
+  let result = null;
+
+  if(!data) {
+    return { err: '接口服务没有数据返回', result };
+  }
+
+  try {
+    const rs = JSON.parse(data);
+
+    if(rs.status !== 0) {
+      return { err: rs.result, result };
+    }
+
+    return { err, result: rs.result };
+  }catch (e) {
+    return { err: e.message, result };
+  }
+};
+
 module.exports = utils;

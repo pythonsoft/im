@@ -214,9 +214,4 @@ service.delete = function (ownerId, targetId, type, cb) {
   })
 };
 
-service.isFriend = function () {
-  
-}
-
-
 module.exports = service;
