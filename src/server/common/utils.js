@@ -496,7 +496,7 @@ utils.formatRequestResult = function(data) {
 
     return { err, result: rs.result };
   }catch (e) {
-    return { err: err.message, result };
+    return { err: e.message, result };
   }
 };
 

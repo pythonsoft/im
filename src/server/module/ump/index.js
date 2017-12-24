@@ -3,11 +3,11 @@ const utils = require('../../common/utils');
 
 const api = {};
 
-api.createTask = function(socket, packageInfo, cb) {
+api.create = function(socketInfo, packageInfo, cb) {
   const rsmq = config.rsmq;
   const data = packageInfo.data;
 
-  rsmq.sendMessage({ qname: socket.info.queueName, message: JSON.stringify(data) }, function (err, resp) {
+  rsmq.sendMessage({ qname: socketInfo.queueName, message: JSON.stringify(data) }, function (err, resp) {
     if (err) {
       return cb && cb(err.message);
     }
@@ -15,5 +15,7 @@ api.createTask = function(socket, packageInfo, cb) {
     return cb && cb(null, data.type);
   });
 };
+
+api.update = function() {};
 
 module.exports = api;

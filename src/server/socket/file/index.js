@@ -9,6 +9,7 @@ const utils = require('../../common/utils');
 const loginMiddleware = require('../../middleware/login');
 
 const config = require('../../config');
+const fileConfig = require('./config');
 const redisMQ = require('./redisMQ');
 const STORAGE_PATH = config.uploadPath;
 const isStorageExist = fs.existsSync(STORAGE_PATH);
@@ -30,22 +31,7 @@ if (!isStorageExist) {
   fs.mkdirSync(STORAGE_PATH);
 }
 
-const STATUS = {
-  ready: 1,
-  start: 2,
-  transfer: 3,
-  transferSuccess: 4,
-  composeStart: 5,
-  compose: 6,
-  composeSuccess: 7,
-  composeError: 8,
-  removePackagePartStart: 9,
-  removePackagePart: 10,
-  removePackageSuccess: 11,
-  removePackageError: 12,
-  success: 999,
-  error: 1000,
-};
+const STATUS = fileConfig.STATUS;
 
 const isGetAllPackage = function (task) {
   if (!task) {
@@ -66,7 +52,8 @@ const isGetAllPackage = function (task) {
   return flag;
 };
 
-const composeFile = function (task, successFn) {
+const composeFile = function (socket, successFn) {
+  const task = socket.task;
   const taskId = task.data._id;
 
   if (!task) {
@@ -78,7 +65,7 @@ const composeFile = function (task, successFn) {
   const filePath = path.join(STORAGE_PATH, taskId, name);
   const len = order.length;
 
-  updateStatus(task, STATUS.composeStart);
+  // updateStatus(socket, STATUS.composeStart);
 
   const writeFile = function (index, start) {
     const packagePartId = order[index];
@@ -89,16 +76,16 @@ const composeFile = function (task, successFn) {
 
     ws.on('error', (err) => {
       utils.console('write file to storage fail', err);
-      updateStatus(task, STATUS.composeError, err);
+      updateStatus(socket, STATUS.composeError, err);
     });
 
     ws.on('finish', () => {
       if (index < len - 1) {
-        updateStatus(task, STATUS.compose);
+        // updateStatus(socket, STATUS.compose);
         writeFile(index + 1, start + packageInfo.size);
       } else {
         task.filePath = filePath;
-        updateStatus(task, STATUS.composeSuccess);
+        // updateStatus(socket, STATUS.composeSuccess);
         utils.console('compose file success');
         successFn && successFn();
       }
@@ -110,7 +97,8 @@ const composeFile = function (task, successFn) {
   writeFile(0, 0);
 };
 
-const removePackageParts = function (task, callback) {
+const removePackageParts = function (socket, callback) {
+  const task = socket.task;
   const taskId = task.data._id;
 
   if (!task) {
@@ -123,7 +111,7 @@ const removePackageParts = function (task, callback) {
 
     if (!partId) {
       utils.console('remove package parts success');
-      updateStatus(task, STATUS.removePackageSuccess);
+      // updateStatus(socket, STATUS.removePackageSuccess);
       callback && callback();
       return false;
     }
@@ -131,14 +119,14 @@ const removePackageParts = function (task, callback) {
     const fp = path.join(STORAGE_PATH, taskId, partId);
 
     if (fs.existsSync(fp)) {
-      updateStatus(task, STATUS.removePackagePart);
+      // updateStatus(socket, STATUS.removePackagePart);
       fs.unlinkSync(fp);
     }
 
     del(index + 1);
   };
 
-  updateStatus(task, STATUS.removePackagePartStart);
+  // updateStatus(socket, STATUS.removePackagePartStart);
   del(0);
 };
 
@@ -147,17 +135,20 @@ const invalidRequest = function (socket, message) {
   socket.disconnect();
 };
 
-let updateStatus = function (task, status, errorMessage) {
+let updateStatus = function (socket, status, result) {
+  const task = socket.task;
   task.status = status;
 
   if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
-    task.error = errorMessage.message ? errorMessage.message : errorMessage.toString();
+    task.error = result.message ? result.message : result.toString();
   }
 
-  if (status === STATUS.success) {
-    //todo
+  factoryInterface(socket.info.key).update(socket.info, status, {}, socket.callbackResult, err => {
+    if(err) {
+      console.log('update error -->', err);
+    }
+  });
 
-  }
 };
 
 class FileIO {
@@ -191,7 +182,7 @@ class FileIO {
         const taskData = socket.task.data;
         const totalSize = taskData.size;
         const startTime = Date.now();
-        const interval = 5000;
+        const interval = 3000;
 
         let lastSize = 0;
 
@@ -204,7 +195,24 @@ class FileIO {
           }
 
           lastSize = passedLength;
+
           utils.processWrite(`任务(${taskData.name} - ${taskData._id})已接收${utils.formatSize(passedLength)}, ${percent}%, 平均速度：${utils.formatSize(averageSpeed)}/s`);
+
+          const avs = passedLength >= totalSize ? totalSize / ((Date.now() - startTime) / 1000) : averageSpeed;
+          const postData = {
+            progress: percent,
+            speed: utils.formatSize(avs) + '/s'
+          };
+          //这里使用的是定时器，更新会有延迟，会导至状态不正常，所以这里不更新状态
+          factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, (err, r) => {
+            if(err) {
+              console.log('update error -->', err);
+            }
+          });
+
+          socket.emit('transfer_progress', Object.assign({
+            callbackResult: socket.callbackResult
+          }, postData));
 
           if (passedLength >= totalSize) {
             console.log(`共用时：${(Date.now() - startTime) / 1000}秒`);
@@ -233,8 +241,6 @@ class FileIO {
           return false;
         }
 
-        console.log('socket header package -->', socket.task);
-
         if (socket.task._id === data._id) {
           invalidRequest(socket, 'ignore task which exist.');
           return false;
@@ -261,20 +267,23 @@ class FileIO {
         };
 
         //创建上传任务回调调用
-        factoryInterface(socket.info.key).createTask(socket, mainTaskInfo, (err, rs) => {
+        factoryInterface(socket.info.key).create(socket.info, mainTaskInfo, (err, rs) => {
           if (err) {
-            socket.emit('error', err);
+            socket.emit('error', err.toString());
             socket.disconnect();
             return false;
           }
 
           utils.console('socket id map', socket.info);
+          utils.console('factoryInterface create', rs);
 
           fs.mkdirSync(path.join(mainTaskInfo.targetDir));
           socket.task =  Object.assign({}, mainTaskInfo);
-          socket.emit('transfer_start');
+          //返回结果挂到socket对象
+          socket.callbackResult = rs;
+          socket.emit('transfer_start', rs);
           transferStartTime = Date.now();
-
+          updateStatus(socket, STATUS.transfer);
           showProcess();
         });
 
@@ -283,7 +292,7 @@ class FileIO {
       socket.on('error', (err) => {
         utils.console(`socket error socket id: ${socket.id}`, err);
         socket.disconnect();
-        updateStatus(socket.task, STATUS.error, err);
+        updateStatus(socket, STATUS.error, err);
       });
 
       socket.on('disconnect', () => {
@@ -309,7 +318,8 @@ class FileIO {
 
         const filename = path.join(task.targetDir, data._id);
         const writeStream = fs.createWriteStream(filename);
-        updateStatus(socket.task, STATUS.transfer);
+
+        // updateStatus(socket, STATUS.transfer);
 
         writeStream.on('finish', () => {
           const type = stop ? 'stop': 'transfer';
@@ -317,7 +327,7 @@ class FileIO {
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
             data.type = 'error';
-            updateStatus(socket.task, STATUS.error, data.error);
+            updateStatus(socket, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
             return false;
           }
@@ -336,17 +346,17 @@ class FileIO {
             data.type = 'complete';
             data.speed = totalTime ? utils.formatSize(totalSize*1000/totalTime) + '/s' : '';
 
-            console.log('speed -->', data);
             redisMQ.sendMessage(socket.info.queueName, data);
-            updateStatus(socket.task, STATUS.success);
-
-            socket.emit('complete', '');
-            socket.disconnect();
+            // updateStatus(socket, STATUS.success);
+            // socket.emit('complete', '');
+            // socket.disconnect();
 
             utils.console('compose file');
-            composeFile(socket.task, () => {
-              removePackageParts(socket.task, () => {
-                updateStatus(socket.task, STATUS.success);
+            composeFile(socket, () => {
+              removePackageParts(socket, () => {
+                updateStatus(socket, STATUS.success);
+                socket.emit('complete', '');
+                socket.disconnect();
               });
             });
           }
@@ -355,7 +365,8 @@ class FileIO {
         writeStream.on('error', (err) => {
           data.status = STATUS.error;
           data.error = err;
-          updateStatus(socket.task, STATUS.error, err, socket.info.queueName, data);
+          // updateStatus(socket, STATUS.error, err, socket.info.queueName, data);
+          updateStatus(socket, STATUS.error, err);
         });
 
         stream.on('data', (chunk) => {
