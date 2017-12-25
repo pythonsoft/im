@@ -24,6 +24,7 @@ config.whitelist = [
   'http://localhost:8000',
   'http://10.0.15.105:8000',
   'http://10.0.15.101:8000',
+  'http://10.0.14.122:8080',
   'http://ump.szdev.cn',
   'http://api.szdev.cn',
   'http://localhost.szdev.cn:8000',
@@ -31,5 +32,5 @@ config.whitelist = [
 
 //文件上传服务回调地址
 config.callbackAPIHOST = {
-  mediaexpress: 'http://10.0.14.134:8099'
+  mediaexpress: 'http://10.0.14.122:8099'
 };

@@ -81,6 +81,7 @@ api.update = function(socketInfo, status, info, callbackResult, cb) {
   if(!callbackResult) {
     return cb && cb('the callbackResult not return from create interface');
   }
+
   const workflowInfo = callbackResult.workflowInfo;
 
   if(!workflowInfo) {
@@ -103,6 +104,13 @@ api.update = function(socketInfo, status, info, callbackResult, cb) {
     postData.speed = info.speed;
   }
 
+  if(info.receiveSize) {
+    postData.receiveSize = info.receiveSize;
+  }
+
+  if(info.totalSize) {
+    postData.totalSize = info.totalSize;
+  }
 
   if(info.message) {
     postData.message = info.message;
