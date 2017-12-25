@@ -76,6 +76,7 @@ const composeFile = function (socket, successFn) {
 
     ws.on('error', (err) => {
       utils.console('write file to storage fail', err);
+      socket.emit('transfer_error', err);
       updateStatus(socket, STATUS.composeError, err);
     });
 
@@ -140,12 +141,16 @@ let updateStatus = function (socket, status, result) {
   task.status = status;
 
   if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
-    task.error = result.message ? result.message : result.toString();
+    if(result) {
+      task.error = result.message ? result.message : result.toString();
+    }else {
+      task.error = 'unknow error';
+    }
   }
 
   factoryInterface(socket.info.key).update(socket.info, status, {}, socket.callbackResult, err => {
     if(err) {
-      console.log('update error -->', err);
+      console.log('update error 3 -->', err, result);
     }
   });
 
@@ -165,7 +170,7 @@ class FileIO {
         socket.task = data.task;
         next();
       } else {
-        socket.emit('error', rs.result);
+        socket.emit('transfer_error', rs.result);
         socket.disconnect();
       }
     });
@@ -201,12 +206,14 @@ class FileIO {
           const avs = passedLength >= totalSize ? totalSize / ((Date.now() - startTime) / 1000) : averageSpeed;
           const postData = {
             progress: percent,
-            speed: utils.formatSize(avs) + '/s'
+            speed: utils.formatSize(avs) + '/s',
+            receiveSize: passedLength,
+            totalSize: totalSize
           };
           //这里使用的是定时器，更新会有延迟，会导至状态不正常，所以这里不更新状态
           factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, (err, r) => {
             if(err) {
-              console.log('update error -->', err);
+              console.log('update error 2 -->', err);
             }
           });
 
@@ -268,8 +275,10 @@ class FileIO {
 
         //创建上传任务回调调用
         factoryInterface(socket.info.key).create(socket.info, mainTaskInfo, (err, rs) => {
+          //返回结果挂到socket对象
+          socket.callbackResult = rs;
           if (err) {
-            socket.emit('error', err.toString());
+            socket.emit('transfer_error', err);
             socket.disconnect();
             return false;
           }
@@ -279,8 +288,6 @@ class FileIO {
 
           fs.mkdirSync(path.join(mainTaskInfo.targetDir));
           socket.task =  Object.assign({}, mainTaskInfo);
-          //返回结果挂到socket对象
-          socket.callbackResult = rs;
           socket.emit('transfer_start', rs);
           transferStartTime = Date.now();
           updateStatus(socket, STATUS.transfer);
@@ -291,6 +298,7 @@ class FileIO {
 
       socket.on('error', (err) => {
         utils.console(`socket error socket id: ${socket.id}`, err);
+        socket.emit('transfer_error', err);
         socket.disconnect();
         updateStatus(socket, STATUS.error, err);
       });
@@ -355,7 +363,7 @@ class FileIO {
             composeFile(socket, () => {
               removePackageParts(socket, () => {
                 updateStatus(socket, STATUS.success);
-                socket.emit('complete', '');
+                socket.emit('complete', socket.callbackResult);
                 socket.disconnect();
               });
             });
