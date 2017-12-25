@@ -18,9 +18,10 @@ const login = {};
 login.isLogin = function isLogin(req) {
   const query = utils.trim(req.query);
   const sk = query.key || req.body.key || 'yunXiang';
-  const ticket = query[TICKET_COOKIE_NAME]
-    || (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME))
-    || (req.body && req.body[TICKET_COOKIE_NAME]);
+  const ticket = query[TICKET_COOKIE_NAME] ||
+    (req.cookies[TICKET_COOKIE_NAME] || req.header(TICKET_COOKIE_NAME)) ||
+    (req.body && req.body[TICKET_COOKIE_NAME]) ||
+    (req.query && req.query[TICKET_COOKIE_NAME]);
 
   if (!ticket) {
     return false;
@@ -47,23 +48,15 @@ login.isLogin = function isLogin(req) {
 
 login.middleware = function middleware(req, res, next) {
   const decodeTicket = login.isLogin(req);
-
   if (decodeTicket) {
-    const now = new Date().getTime();
-    if (decodeTicket[1] > now) { // token有效期内
-      req.query = utils.trim(req.query);
-      req.ex = { userId: decodeTicket[0], key: req.query.key };
+    req.query = utils.trim(req.query);
+    req.ex = { userId: decodeTicket[0], key: req.query.key };
 
-      if (!(req.headers['content-type'] && req.headers['content-type'].indexOf('multipart/form-data') !== -1)) {
-        req.body = utils.trim(req.body);
-      }
-
-      next();
-
-    } else { // 过期
-      res.clearCookie(TICKET_COOKIE_NAME);
-      return res.json(result.fail(req.t('loginExpired')));
+    if (!(req.headers['content-type'] && req.headers['content-type'].indexOf('multipart/form-data') !== -1)) {
+      req.body = utils.trim(req.body);
     }
+
+    next();
   } else {
     return res.json(result.fail(req.t('notLogin')));
   }

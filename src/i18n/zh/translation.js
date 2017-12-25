@@ -129,4 +129,16 @@ module.exports = {
     code: '-160020',
     message: '联系人已经存在',
   },
+  downloadURLIsNull: {
+    code: '-170000',
+    message: '下载参数url为空',
+  },
+  fileIsNotExist: {
+    code: '-170001',
+    message: '下载文件不存在',
+  },
+  downloadPathInvalid: {
+    code: '-170002',
+    message: '下载路径非法',
+  },
 };

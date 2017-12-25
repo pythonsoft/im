@@ -68,7 +68,7 @@ api.create = function(socketInfo, packageInfo, cb) {
     name: file.name,
     originPath: '----',
     rootPath: config.uploadPath,
-    storagePath: packageInfo.targetDir,
+    storagePath: packageInfo.relativePath,
     size: file.size,
     contentType: mime.getType(path.extname(file.name))
   }, (err, r) => {
