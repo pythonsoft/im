@@ -4,8 +4,7 @@ config.domain = `http://${config.host}`;
 config.dbName = 'im';
 
 config.mongodb = {
-  // [`${config.dbName}URL`]: `mongodb://localhost:27017/${config.dbName === 'ump' ? 'ump_v1' : 'ump_test'}`,
-  [`${config.dbName}URL`]: `mongodb://10.0.15.62:27017/${config.dbName === 'im' ? 'im_ump_v1' : 'im_ump_test'}`,
+  [`${config.dbName}URL`]: `mongodb://10.0.15.62:27017/${config.dbName === 'im' ? 'im_mediaexpress_v1' : 'im_mediaexpress_test'}`,
 };
 
 config.redis_host = '10.0.15.69';
