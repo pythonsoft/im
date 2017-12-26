@@ -17,6 +17,8 @@ const isStorageExist = fs.existsSync(STORAGE_PATH);
 const mediaExpressAPI = require('../../module/mediaExpress');
 const umpAPI = require('../../module/ump');
 
+const fse = require('fs-extra');
+
 const factoryInterface = function(key) {
   const interfaces = {
     'mediaexpress': mediaExpressAPI,
@@ -54,7 +56,6 @@ const isGetAllPackage = function (task) {
 
 const composeFile = function (socket, successFn) {
   const task = socket.task;
-  const taskId = task.data._id;
 
   if (!task) {
     throw new Error('task is not exist.');
@@ -62,7 +63,8 @@ const composeFile = function (socket, successFn) {
 
   const order = task.data.order;
   const name = task.data.name.replace(/[\\\/:*?"<>|”]/img, '_');
-  const filePath = path.join(STORAGE_PATH, taskId, name);
+  // const filePath = path.join(STORAGE_PATH, taskId, name);
+  const filePath = path.join(task.targetDir, name);
   const len = order.length;
 
   // updateStatus(socket, STATUS.composeStart);
@@ -71,7 +73,7 @@ const composeFile = function (socket, successFn) {
     const packagePartId = order[index];
     const packageInfo = task.acceptPackagePart[packagePartId];
     const ws = fs.createWriteStream(filePath, { start, flags: start > 0 ? 'r+' : 'w', encoding: 'binary' });
-    const fp = path.join(STORAGE_PATH, taskId, packagePartId);
+    const fp = path.join(task.targetDir, packagePartId);
     const rs = fs.createReadStream(fp);
 
     ws.on('error', (err) => {
@@ -100,7 +102,6 @@ const composeFile = function (socket, successFn) {
 
 const removePackageParts = function (socket, callback) {
   const task = socket.task;
-  const taskId = task.data._id;
 
   if (!task) {
     throw new Error('task is not exist.');
@@ -117,7 +118,7 @@ const removePackageParts = function (socket, callback) {
       return false;
     }
 
-    const fp = path.join(STORAGE_PATH, taskId, partId);
+    const fp = path.join(task.targetDir, partId);
 
     if (fs.existsSync(fp)) {
       // updateStatus(socket, STATUS.removePackagePart);
@@ -211,7 +212,7 @@ class FileIO {
             totalSize: totalSize
           };
           //这里使用的是定时器，更新会有延迟，会导至状态不正常，所以这里不更新状态
-          factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, (err, r) => {
+          factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, err => {
             if(err) {
               console.log('update error 2 -->', err);
             }
@@ -262,10 +263,13 @@ class FileIO {
         utils.console('socket.info.queueName', socket.info.queueName);
 
         data.type = 'create';
+        const now = new Date();
+        const relativePath = path.join(now.getFullYear() + '', now.getMonth() + 1 + '', now.getDate() + '', data._id);
 
         const mainTaskInfo = {
           data,
-          targetDir: path.join(STORAGE_PATH, data._id),
+          relativePath,
+          targetDir: path.join(STORAGE_PATH, relativePath),
           status: STATUS.start,
           acceptPackagePart: {},
           filePath: '',
@@ -286,7 +290,7 @@ class FileIO {
           utils.console('socket id map', socket.info);
           utils.console('factoryInterface create', rs);
 
-          fs.mkdirSync(path.join(mainTaskInfo.targetDir));
+          fse.ensureDirSync(mainTaskInfo.targetDir);
           socket.task =  Object.assign({}, mainTaskInfo);
           socket.emit('transfer_start', rs);
           transferStartTime = Date.now();
