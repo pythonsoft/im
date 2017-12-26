@@ -10,7 +10,7 @@ const loginMiddleware = require('../../middleware/login');
 
 const config = require('../../config');
 const fileConfig = require('./config');
-const redisMQ = require('./redisMQ');
+
 const STORAGE_PATH = config.uploadPath;
 const isStorageExist = fs.existsSync(STORAGE_PATH);
 
@@ -19,10 +19,10 @@ const umpAPI = require('../../module/ump');
 
 const fse = require('fs-extra');
 
-const factoryInterface = function(key) {
+const factoryInterface = function (key) {
   const interfaces = {
-    'mediaexpress': mediaExpressAPI,
-    'ump': umpAPI
+    mediaexpress: mediaExpressAPI,
+    ump: umpAPI,
   };
 
   return interfaces[key];
@@ -142,19 +142,18 @@ let updateStatus = function (socket, status, result) {
   task.status = status;
 
   if (status === STATUS.error || status === STATUS.composeError || status === STATUS.removePackageError) {
-    if(result) {
+    if (result) {
       task.error = result.message ? result.message : result.toString();
-    }else {
+    } else {
       task.error = 'unknow error';
     }
   }
 
-  factoryInterface(socket.info.key).update(socket.info, status, {}, socket.callbackResult, err => {
-    if(err) {
+  factoryInterface(socket.info.key).update(socket.info, status, {}, socket.callbackResult, (err) => {
+    if (err) {
       console.log('update error 3 -->', err, result);
     }
   });
-
 };
 
 class FileIO {
@@ -181,7 +180,6 @@ class FileIO {
 
       let passedLength = 0;
       let isConnect = true;
-      let stop = false;
       let transferStartTime = 0;
 
       const showProcess = function () {
@@ -207,19 +205,19 @@ class FileIO {
           const avs = passedLength >= totalSize ? totalSize / ((Date.now() - startTime) / 1000) : averageSpeed;
           const postData = {
             progress: percent,
-            speed: utils.formatSize(avs) + '/s',
+            speed: `${utils.formatSize(avs)}/s`,
             receiveSize: passedLength,
-            totalSize: totalSize
+            totalSize,
           };
-          //这里使用的是定时器，更新会有延迟，会导至状态不正常，所以这里不更新状态
-          factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, err => {
-            if(err) {
+          // 这里使用的是定时器，更新会有延迟，会导至状态不正常，所以这里不更新状态
+          factoryInterface(socket.info.key).update(socket.info, '', postData, socket.callbackResult, (err) => {
+            if (err) {
               console.log('update error 2 -->', err);
             }
           });
 
           socket.emit('transfer_progress', Object.assign({
-            callbackResult: socket.callbackResult
+            callbackResult: socket.callbackResult,
           }, postData));
 
           if (passedLength >= totalSize) {
@@ -239,12 +237,13 @@ class FileIO {
       };
 
       socket.on('headerPackage', (data) => {
-        if(!data || utils.isEmptyObject(data)) {
+        //console.log("data===>", data);
+        if (!data || utils.isEmptyObject(data)) {
           invalidRequest(socket, 'header package data is invalid');
           return false;
         }
 
-        if(typeof data._id === 'undefined' || typeof data.size === 'undefined' || typeof data.name === 'undefined') {
+        if (typeof data._id === 'undefined' || typeof data.size === 'undefined' || typeof data.name === 'undefined') {
           invalidRequest(socket, 'header package data must include param _id name size');
           return false;
         }
@@ -260,11 +259,11 @@ class FileIO {
         }
 
         utils.console('accept header package', data);
-        utils.console('socket.info.queueName', socket.info.queueName);
+        socket.info._id = data._id;
 
         data.type = 'create';
         const now = new Date();
-        const relativePath = path.join(now.getFullYear() + '', now.getMonth() + 1 + '', now.getDate() + '', data._id);
+        const relativePath = path.join(`${now.getFullYear()}`, `${now.getMonth() + 1}`, `${now.getDate()}`, data._id);
 
         const mainTaskInfo = {
           data,
@@ -277,9 +276,9 @@ class FileIO {
           socketId: socket.id,
         };
 
-        //创建上传任务回调调用
+        // 创建上传任务回调调用
         factoryInterface(socket.info.key).create(socket.info, mainTaskInfo, (err, rs) => {
-          //返回结果挂到socket对象
+          // 返回结果挂到socket对象
           socket.callbackResult = rs;
           if (err) {
             socket.emit('transfer_error', err);
@@ -291,13 +290,12 @@ class FileIO {
           utils.console('factoryInterface create', rs);
 
           fse.ensureDirSync(mainTaskInfo.targetDir);
-          socket.task =  Object.assign({}, mainTaskInfo);
+          socket.task = Object.assign({}, mainTaskInfo);
           socket.emit('transfer_start', rs);
           transferStartTime = Date.now();
           updateStatus(socket, STATUS.transfer);
           showProcess();
         });
-
       });
 
       socket.on('error', (err) => {
@@ -312,12 +310,12 @@ class FileIO {
         utils.console(`disconnect with client :${socket.id}`);
       });
 
-      socket.on('stop', (data)=> {
-        data.type = 'stop';
-        stop = false;
+      socket.on('stop', (data) => {
+        updateStatus(socket, STATUS.STOP);
+
       });
 
-      socket.on('restart', ()=>{
+      socket.on('restart', () => {
         socket.emit('transfer_package_finish', '');
       });
 
@@ -334,41 +332,45 @@ class FileIO {
         // updateStatus(socket, STATUS.transfer);
 
         writeStream.on('finish', () => {
-          const type = stop ? 'stop': 'transfer';
-
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
-            data.type = 'error';
             updateStatus(socket, STATUS.error, data.error);
             socket.emit('transfer_package_error', data);
             return false;
           }
 
           socket.task.acceptPackagePart[data._id] = data;
-          data.type = type;
 
           socket.emit('transfer_package_success', data);
           socket.emit('transfer_package_finish', data);
 
           if (isGetAllPackage(socket.task)) {
             // get all package and compose file
-            const totalSize = socket.task.data.size;
-            const totalTime = Date.now() - transferStartTime;
-
-            data.type = 'complete';
-            data.speed = totalTime ? utils.formatSize(totalSize*1000/totalTime) + '/s' : '';
-
-            redisMQ.sendMessage(socket.info.queueName, data);
-            // updateStatus(socket, STATUS.success);
-            // socket.emit('complete', '');
-            // socket.disconnect();
 
             utils.console('compose file');
             composeFile(socket, () => {
               removePackageParts(socket, () => {
-                updateStatus(socket, STATUS.success);
-                socket.emit('complete', socket.callbackResult);
-                socket.disconnect();
+                const totalSize = socket.task.data.size;
+                const totalTime = Date.now() - transferStartTime;
+                const speed = totalTime ? `${utils.formatSize(totalSize * 1000 / totalTime)}/s` : '';
+                const postData = {
+                  progress: '100',
+                  speed,
+                  receiveSize: passedLength,
+                  totalSize,
+                };
+                factoryInterface(socket.info.key).update(socket.info, STATUS.SUCCESS, postData, socket.callbackResult, (err) => {
+                  if (err) {
+                    console.log('update error 2 -->', err);
+                    socket.emit('transfer_error', err);
+                    socket.disconnect();
+                  } else {
+                    const task = socket.task;
+                    task.status = STATUS.SUCCESS;
+                    socket.emit('complete', socket.callbackResult);
+                    socket.disconnect();
+                  }
+                });
               });
             });
           }

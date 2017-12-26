@@ -103,7 +103,7 @@ router.get('/download', (req, res) => {
 
   const targetDir = path.join(config.uploadPath, url);
 
-  if(!fs.existsSync(targetDir)) {
+  if (!fs.existsSync(targetDir)) {
     return res.json(result.fail(i18n.t('fileIsNotExist')));
   }
 

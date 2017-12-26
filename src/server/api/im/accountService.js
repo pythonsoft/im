@@ -28,9 +28,9 @@ service.syncAccount = function (info, cb) {
   }
 
   accountInfo.collection.findOne({ _id: aInfo._id }, { fields: { _id: 1 } }, (err, doc) => {
-  if (aInfo.email && !utils.checkEmail(aInfo.email)) {
-    return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'email' }));
-  }
+    if (aInfo.email && !utils.checkEmail(aInfo.email)) {
+      return cb && cb(i18n.t('imAccountFieldsIsNull', { field: 'email' }));
+    }
     if (doc) {
       delete aInfo._id;
       accountInfo.updateOne({ _id: aInfo._id }, aInfo, (err) => {
@@ -39,20 +39,20 @@ service.syncAccount = function (info, cb) {
           return cb && cb(i18n.t('databaseError'));
         }
         return cb && cb(null, aInfo);
-      })
-    }else {
+      });
+    } else {
       aInfo.createdTime = new Date();
 
       accountInfo.insertOne(aInfo, (err, r) => {
         if (err) {
           logger.error(err.message);
-            return cb && cb(i18n.t('databaseError'));
-          }
-          return cb && cb(null, r);
-        });
-      }
-    });
-  };
+          return cb && cb(i18n.t('databaseError'));
+        }
+        return cb && cb(null, r);
+      });
+    }
+  });
+};
 
 service.login = function (id, cb, key) {
   if (!id) {
@@ -126,12 +126,12 @@ service.getUsers = function getUsers(ids, cb) {
   });
 };
 
-service.list = function(keyword, page=1, pageSize=20, sortFields='-createdTime', fieldNeeds, cb) {
+service.list = function (keyword, page = 1, pageSize = 20, sortFields = '-createdTime', fieldNeeds, cb) {
   const q = {};
 
   if (keyword) {
     q.$or = [
-      { _id: { $regex: keyword, $options:'i'} },
+      { _id: { $regex: keyword, $options: 'i' } },
       { name: { $regex: keyword, $options: 'i' } },
       { email: { $regex: keyword, $options: 'i' } },
       { phone: { $regex: keyword, $options: 'i' } },
@@ -146,7 +146,6 @@ service.list = function(keyword, page=1, pageSize=20, sortFields='-createdTime',
 
     return cb && cb(null, rs);
   }, sortFields, fieldNeeds);
-
 };
 
 module.exports = service;

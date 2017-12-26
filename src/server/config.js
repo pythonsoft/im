@@ -8,7 +8,6 @@ const path = require('path');
 const fs = require('fs');
 const vm = require('vm');
 const redis = require('redis');
-const RedisMQ = require('rsmq');
 require('redis-streams')(redis);
 
 const config = {};
@@ -28,25 +27,19 @@ config.cookieExpires = 1000 * 60 * 60 * 24 * 7; // cookie有效期七天
 config.redisExpires = 1 * 60 * 60 * 12; // redis有效期12小时
 config.port = 9000;
 
-//用于登录时验证身份
+// 用于登录时验证身份
 config.secret = {
   yunXiang: 'BRYSJHHRHLYQQLMG',
   ump: 'secret',
-  mediaexpress: 'meidaexpress'
+  mediaexpress: 'meidaexpress',
 };
 
-//用于加密传输时的解密
+// 用于加密传输时的解密
 config.cryptoKey = {
   yunXiang: 'china2008',
   ump: 'china2009',
   mediaexpress: 'china2010',
 };
-
-config.queueName = {};
-
-for(let k in config.secret) {
-  config.queueName[k] = k + '-assist-queue'
-}
 
 const init = function init() {
   const redisClient = redis.createClient(config.redis_port, config.redis_host, config.redis_opts);
@@ -57,39 +50,9 @@ const init = function init() {
 
   redisClient.on('ready', () => {
     console.log('Redis Connect Success!');
-    initRedisMQ();
   });
 
   config.redisClient = redisClient;
-};
-
-const initRedisMQ = function initRedisMQ(cb) {
-  const rsmq = new RedisMQ({ client: config.redisClient, ns: 'rsmq'});
-  const keys = Object.keys(config.queueName);
-
-  const createQueue = function(index) {
-    let name = keys[index];
-
-    if(!name) {
-      console.log(`消息队列创建完成`);
-      config.rsmq = rsmq;
-      return cb && cb ();
-    }
-
-    rsmq.createQueue({ qname: config.queueName[name] }, function (err, resp) {
-      if (err) {
-        console.log(`创建 ${config.queueName[name]} 消息队列失败 ${err}`);
-      }
-
-      if (resp === 1) {
-        console.log(`${config.queueName[name]} 消息队列成功`);
-      }
-
-      createQueue(index + 1);
-    });
-  };
-
-  createQueue(0);
 };
 
 const readConfig = function readConfig(p) {

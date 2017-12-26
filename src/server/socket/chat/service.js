@@ -49,33 +49,32 @@ service.addContact = function (socket, query) {
   });
 };
 
-//获取通讯录列表
-service.listContact = function(socket, query) {
+// 获取通讯录列表
+service.listContact = function (socket, query) {
   contactService.list(query.ownerId, query.type, (err, docs) => {
-    if(err) {
+    if (err) {
       return socket.emit('listContact', errorJSON(err, query._cid));
     }
 
     const len = docs.length;
 
-    if(len === 0) {
+    if (len === 0) {
       return socket.emit('listContact', json(err, docs, query._cid));
     }
 
     const sessionIds = [];
     let temp = null;
 
-    for(let i = 0; i < len; i++) {
+    for (let i = 0; i < len; i++) {
       temp = docs[i];
       docs[i].sessionInfo = {};
 
-      if(temp.type === ContactInfo.TYPE.NORMAL_GROUP) {
+      if (temp.type === ContactInfo.TYPE.NORMAL_GROUP) {
         sessionIds.push(temp.targetId);
       }
-
     }
 
-    if(sessionIds.length === 0) {
+    if (sessionIds.length === 0) {
       return socket.emit('listContact', json(err, docs, query._cid));
     }
 
@@ -85,8 +84,8 @@ service.listContact = function(socket, query) {
       }
 
       for (let i = 0, l = sDocs.length; i < l; i++) {
-        for(let j = 0; j < len; j++) {
-          if(sDocs[i]._id === docs[j].targetId) {
+        for (let j = 0; j < len; j++) {
+          if (sDocs[i]._id === docs[j].targetId) {
             docs[j].sessionInfo = sDocs[i];
           }
         }
@@ -94,7 +93,6 @@ service.listContact = function(socket, query) {
 
       socket.emit('listContact', json(err, docs, query._cid));
     });
-
   });
 };
 
@@ -175,71 +173,70 @@ service.message = function (socket, query, ns) {
 
       // helper.roomExist(ns,userId);
       for (let i = 0, len = members.length; i < len; i++) {
-        ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message',successJSON(info,query._cid));
+        ns.to(helper.getRoomNameByUserId(members[i]._id)).emit('message', successJSON(info, query._cid));
       }
-
     });
   });
 };
 
 // 通过关键字检索找到用户
-service.searchUser = function (socket, query)  {
-  accountService.list(query.keyword,query.page=1, query.pageSize=20, query.sortFields='-createdTime', query.fieldNeeds, (err, rs) => {
+service.searchUser = function (socket, query) {
+  accountService.list(query.keyword, query.page = 1, query.pageSize = 20, query.sortFields = '-createdTime', query.fieldNeeds, (err, rs) => {
     socket.emit('searchUser', json(err, rs, query._cid));
-  })
+  });
 };
 
 // 找到两个ID的共有会话
-service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(socket,query) {
-  sessionService.getSessionByUserIdAtC2C(query.ownerId,query.targetId,(err, rs) => {
-    socket.emit('getSessionByUserIdAtC2C',json(err, rs, query._cid));
-  })
+service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(socket, query) {
+  sessionService.getSessionByUserIdAtC2C(query.ownerId, query.targetId, (err, rs) => {
+    socket.emit('getSessionByUserIdAtC2C', json(err, rs, query._cid));
+  });
 };
 
 // 删除好友
-service.deleteContact = function deleteContact(socket,query) {
-  contactService.delete(query.ownerId,query.targetId,query.type,(err, rs) => {
-    socket.emit('deleteContact',json(err, rs, query._cid));
-  })
+service.deleteContact = function deleteContact(socket, query) {
+  contactService.delete(query.ownerId, query.targetId, query.type, (err, rs) => {
+    socket.emit('deleteContact', json(err, rs, query._cid));
+  });
 };
 
-//获取session信息
+// 获取session信息
 service.getSessionInfo = function (socket, query) {
-  sessionService.getSession(query.sessionId,(err, rs) => {
-    socket.emit('getSessionInfo',json(err, rs, query._cid));
-  })
+  sessionService.getSession(query.sessionId, (err, rs) => {
+    socket.emit('getSessionInfo', json(err, rs, query._cid));
+  });
 };
 
-//获取历史消息
+// 获取历史消息
 service.listStorage = function (socket, query) {
-  messageService.list(query.sessionId, query.page, query.pageSize || 10 , false , (err, docs) => {
+  messageService.list(query.sessionId, query.page, query.pageSize || 10, false, (err, docs) => {
     socket.emit('listStorage', json(err, docs, query._cid));
-  })
+  });
 };
 
 // 用户删除一个会话时，将用户从这个上会话移除
 service.leaveSession = function (socket, query) {
   sessionService.leaveSession(query.sessionId, query.userId, (err, docs) => {
-    socket.emit('leaveSession',json(err, docs, query._cid));
-  })
-};
-
-//删除一个会话
-service.deleteSession =function (socket, query) {
-  sessionService.deleteSession(query.sessionId, query.creatorId, (err, docs) => {
-    socket.emit('deleteSession',json(err, docs, query._cid));
+    socket.emit('leaveSession', json(err, docs, query._cid));
   });
 };
 
-//添加星标联系人
-service.setOnTopSession = function (socket, query) {
-  sessionService.setOnTopSession( query.sessionId, (err, docs) => {
-    socket.emit('setOnTopSession',json(err, docs, query._cid));
-  })
+// 删除一个会话
+service.deleteSession = function (socket, query) {
+  sessionService.deleteSession(query.sessionId, query.creatorId, (err, docs) => {
+    socket.emit('deleteSession', json(err, docs, query._cid));
+  });
 };
 
-//获取星标联系人列表
-service.listOnTopSession = function ( socket, query ) {
+// 添加星标联系人
+service.setOnTopSession = function (socket, query) {
+  sessionService.setOnTopSession(query.sessionId, (err, docs) => {
+    socket.emit('setOnTopSession', json(err, docs, query._cid));
+  });
+};
+
+// 获取星标联系人列表
+service.listOnTopSession = function (socket, query) {
   sessionService.listOnTopSession(query.ownerId, query.page, query.pageSize, false, 'createdTime', (err, docs) => {
     socket.emit('listOnTopSession', json(err, docs, query._cid));
   });

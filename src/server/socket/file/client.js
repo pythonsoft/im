@@ -37,7 +37,7 @@ class FileClient {
     const socket = clientConnect(`http://${me.settings.host}:${me.settings.port}/file`, {
       extraHeaders: {
         'im-ticket': utils.cipher(`${me.settings.userId}-${me.settings.isCrypto ? 1 : 0}`, me.settings.key),
-        'im-key': 'ump'
+        'im-key': 'ump',
       },
     });
 
