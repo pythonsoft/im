@@ -35,7 +35,7 @@ class SessionInfo extends DB {
       admin: { type: 'object', default() { return { _id: '', name: '' }; } }, // 管理员
       createdTime: { type: 'date', validation: 'requirde', allowUpdate: false },
       modifyTime: { type: 'date', validation: 'require' },
-      messageIndex: { type: 'number', default() { return 1 }, validation: 'require' },
+      messageIndex: { type: 'number', default() { return 1; }, validation: 'require' },
       isOnTop: { type: 'boolean', default() { return false; } },
       onTopCreatedTime: { type: 'date' },
       details: { type: 'object' },

@@ -33,7 +33,6 @@ service.getRecentContactList = function getRecentContactList(userId, page = 1, p
 };
 
 service.createSession = function createSession(creatorId, info, cb) {
-
   if (!creatorId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'creatorId' }));
   }
@@ -62,7 +61,6 @@ service.createSession = function createSession(creatorId, info, cb) {
   }
 
   if (!sInfo.type || !utils.isValueInObject(sInfo.type, SessionInfo.TYPE)) {
-
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'type' }));
   }
   accountService.getUsers(sInfo.members, (err, users) => {
@@ -136,7 +134,7 @@ service.leaveSession = function (sessionId, userId, cb) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'userId' }));
   }
 
-  sessionInfo.collection.updateOne({ _id: sessionId }, { $pull: { 'members': { _id: userId } } }, (err, r) => {
+  sessionInfo.collection.updateOne({ _id: sessionId }, { $pull: { members: { _id: userId } } }, (err, r) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
@@ -147,13 +145,13 @@ service.leaveSession = function (sessionId, userId, cb) {
 };
 
 service.getSession = function getSession(sessionId, cb) {
-  console.log('11111111',sessionId);
+  console.log('11111111', sessionId);
 
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
 
-  if(sessionId.constructor === Array) {
+  if (sessionId.constructor === Array) {
     sessionInfo.collection.find({ _id: { $in: sessionId } }).toArray((err, docs) => {
       if (err) {
         logger.error(err.message);
@@ -166,7 +164,7 @@ service.getSession = function getSession(sessionId, cb) {
 
       return cb && cb(null, docs);
     });
-  }else {
+  } else {
     sessionInfo.collection.findOne({ _id: sessionId }, (err, doc) => {
       if (err) {
         logger.error(err.message);
@@ -180,7 +178,6 @@ service.getSession = function getSession(sessionId, cb) {
       return cb && cb(null, doc);
     });
   }
-
 };
 
 /**
@@ -212,30 +209,30 @@ service.getSessionByUserIdAtC2C = function getSessionByUserIdAtC2C(meId, targetI
   });
 };
 
-service.deleteSession =function deleteSession(sessionId, creatorId, cb) {
-  if(!sessionId){
+service.deleteSession = function deleteSession(sessionId, creatorId, cb) {
+  if (!sessionId) {
     return console.log('deleteError1');
   }
 
-  if(!creatorId){
+  if (!creatorId) {
     return console.log('deleteError2');
   }
 
   sessionInfo.collection.deleteOne({
-    _id:sessionId,
-    creatorId:creatorId,
-  },(err,doc) => {
-    if(err){
+    _id: sessionId,
+    creatorId,
+  }, (err, doc) => {
+    if (err) {
       logger.errror(err.message);
-      return cb && cb(i18n.t('databaseError'))
+      return cb && cb(i18n.t('databaseError'));
     }
 
-    if(!doc) {
+    if (!doc) {
       return cb && cb(i18n.t('imSessionIsNotExist'));
     }
 
     return cb && cb(null, doc);
-  })
+  });
 };
 
 service.generateSessionMessageIndex = function (sessionId, cb) {
@@ -250,8 +247,8 @@ service.generateSessionMessageIndex = function (sessionId, cb) {
       returnOriginal: false,
       projection: {
         _id: 1,
-        messageIndex: 1
-      }
+        messageIndex: 1,
+      },
     }, (err, r) => {
       if (err) {
         logger.error(err.message);
@@ -259,10 +256,10 @@ service.generateSessionMessageIndex = function (sessionId, cb) {
       }
 
       return cb && cb(null, r.value);
-  });
-}
+    });
+};
 
-service.updateSessionModifyTime = function(sessionId, cb) {
+service.updateSessionModifyTime = function (sessionId, cb) {
   if (!sessionId) {
     return cb && cb(i18n.t('imSessionFieldsIsNull', { field: 'sessionId' }));
   }
@@ -284,7 +281,7 @@ service.listOnTopSession = function (userId, page = 1, pageSize = 50, fieldNeeds
 
   sessionInfo.pagination({
     'members._id': userId,
-    'isOnTop': true
+    isOnTop: true,
   }, page, pageSize, (err, docs) => {
     if (err) {
       logger.error(err.message);
@@ -303,7 +300,7 @@ service.setOnTopSession = function (sessionId, cb) {
   sessionInfo.collection.updateOne({ _id: sessionId }, { $set: {
     onTopCreatedTime: new Date(),
     isOnTop: true,
-  }}, (err, r) => {
+  } }, (err, r) => {
     if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));

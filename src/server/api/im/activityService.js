@@ -24,7 +24,7 @@ service.setSeq = function (ownerId, sessionId, seq, cb) {
   }
 
   activityInfo.collection.updateOne({
-    sessionId: sessionId,
+    sessionId,
     ownerId,
     seq: { $lte: seqNum },
   }, { seq: seqNum }, { upsert: true }, (err, r) => {

@@ -22,7 +22,7 @@ const hasBeenAdd = function (ownerId, _id, type, cb) {
 };
 
 service.addMany = function (infos, cb) {
-  if(utils.isEmptyObject(infos) || infos.constructor !== Array) {
+  if (utils.isEmptyObject(infos) || infos.constructor !== Array) {
     return { err: i18n.t('imContactFieldsIsNull', { field: 'infos' }) };
   }
 
@@ -30,20 +30,20 @@ service.addMany = function (infos, cb) {
   const arr = [];
   let temp = null;
 
-  if(len === 0) {
+  if (len === 0) {
     return cb && cb(i18n.t('xxxx'));
   }
 
-  for(let i = 0, len = infos.length; i < len; i++) {
+  for (let i = 0, len = infos.length; i < len; i++) {
     temp = getContactInfo(infos[i], infos[i].ownerId);
-    if(temp.err) {
+    if (temp.err) {
       return cb && cb(i18n.t('xxx'));
     }
     arr.push(temp.info);
   }
 
   contactInfo.insertMany(arr, (err, r) => {
-    if(err) {
+    if (err) {
       return cb && cb(err);
     }
 
@@ -51,7 +51,7 @@ service.addMany = function (infos, cb) {
   });
 };
 
-const getContactInfo = function(info, ownerId) {
+const getContactInfo = function (info, ownerId) {
   if (utils.isEmptyObject(info)) {
     return { err: i18n.t('imContactFieldsIsNull', { field: 'info' }) };
   }
@@ -92,15 +92,15 @@ const getContactInfo = function(info, ownerId) {
 };
 
 service.add = function (info, ownerId, cb) {
-  if(info.constructor === Array) {
+  if (info.constructor === Array) {
     service.addMany(info, cb);
     return false;
   }
 
   const rs = getContactInfo(info, ownerId);
 
-  if(rs.err) {
-    return cb && cb (rs.err);
+  if (rs.err) {
+    return cb && cb(rs.err);
   }
 
   const cInfo = rs.info;
@@ -115,11 +115,11 @@ service.add = function (info, ownerId, cb) {
     });
   };
 
-  contactInfo.collection.findOne({ ownerId: ownerId, targetId: info.targetId}, function(err, doc) {
-    if(err){
+  contactInfo.collection.findOne({ ownerId, targetId: info.targetId }, (err, doc) => {
+    if (err) {
       return cb && cb(err);
     }
-    if(doc){
+    if (doc) {
       return cb && cb(i18n.t('imContactIsExist'));
     }
     if (cInfo.type !== ContactInfo.TYPE.PERSON) {
@@ -160,7 +160,6 @@ service.update = function (_id, updateInfo, cb) {
 };
 
 service.list = function (ownerId, type, cb) {
-
   if (!ownerId) {
     return cb && cb(i18n.t('imContactFieldsIsNull', { field: 'ownerId' }));
   }
@@ -184,24 +183,24 @@ service.list = function (ownerId, type, cb) {
 };
 
 service.delete = function (ownerId, targetId, type, cb) {
-  if(!ownerId){
+  if (!ownerId) {
     return console.log('deleteError1');
   }
 
-  if(!targetId){
+  if (!targetId) {
     return console.log('deleteError2');
   }
 
-  if(!type){
+  if (!type) {
     return console.log('deleteError3');
   }
 
   contactInfo.collection.deleteOne({
-    ownerId: ownerId,
-    targetId: targetId,
-    type: type,
-  },(err, doc) => {
-    if(err){
+    ownerId,
+    targetId,
+    type,
+  }, (err, doc) => {
+    if (err) {
       logger.error(err.message);
       return cb && cb(i18n.t('databaseError'));
     }
@@ -211,7 +210,7 @@ service.delete = function (ownerId, targetId, type, cb) {
     }
 
     return cb && cb(null, doc);
-  })
+  });
 };
 
 module.exports = service;
