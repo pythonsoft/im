@@ -18,7 +18,7 @@ const getRoomName = function (name, type) {
 helper.login = function (socket, next) {
   const rs = loginMiddleware.webSocketMiddleware(socket);
   console.log('login --->', rs);
-  console.log('status----->',rs.status);
+  console.log('status----->', rs.status);
   if (rs.status === '0') {
     const data = rs.data;
     socket.info = data.info;
@@ -44,7 +44,6 @@ helper.ensureInRoom = function joinRoom(ns, socket, userId, successFn) {
   const userRoomName = helper.getRoomNameByUserId(userId);
 
   ns.adapter.clients([userRoomName], (err, clients) => {
-
     // 当前socket没有在用户的房间里
     if (clients.indexOf(socket.id) === -1) {
       accountService.login(userId, (err, doc) => {

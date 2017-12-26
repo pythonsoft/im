@@ -16,18 +16,18 @@ const STATUS = {
   DOING: '2', // 任务执行中
   STOP: '3', // 任务停止
   SUCCESS: '4', // 成功
-  ERROR: '100' // 失败
+  ERROR: '100', // 失败
 };
 
-action.post = function(ticket, url, params, cb) {
+action.post = function (ticket, url, params, cb) {
   request.post({
-    url: config.callbackAPIHOST.mediaexpress + '/mzapi/' + url,
+    url: `${config.callbackAPIHOST.mediaexpress}/mzapi/${url}`,
     headers: {
-      ticket: ticket
+      ticket,
     },
-    form: params
+    form: params,
   }, (err, httpResponse, body) => {
-    if(err) {
+    if (err) {
       return cb && cb(err.message);
     }
 
@@ -37,31 +37,31 @@ action.post = function(ticket, url, params, cb) {
   });
 };
 
-const getStatus = function(st) {
+const getStatus = function (st) {
   let rs = STATUS.WAITING;
 
   if (st === fileConfig.STATUS.ready) {
     rs = STATUS.WAITING;
-  }else if(st === fileConfig.STATUS.start) {
+  } else if (st === fileConfig.STATUS.start) {
     rs = STATUS.READY;
-  }else if(
+  } else if (
     st === fileConfig.STATUS.error ||
     st === fileConfig.STATUS.composeError ||
     st === fileConfig.STATUS.removePackageError
   ) {
     rs = STATUS.ERROR;
-  }else if(st === fileConfig.STATUS.success) {
+  } else if (st === fileConfig.STATUS.success) {
     rs = STATUS.SUCCESS;
-  }else if(st === fileConfig.STATUS.stop) {
+  } else if (st === fileConfig.STATUS.stop) {
     rs = STATUS.STOP;
-  }else {
+  } else {
     rs = STATUS.DOING;
   }
 
   return rs;
 };
 
-api.create = function(socketInfo, packageInfo, cb) {
+api.create = function (socketInfo, packageInfo, cb) {
   const file = packageInfo.data;
 
   action.post(socketInfo.ticket, 'createWorkflow', {
@@ -70,49 +70,48 @@ api.create = function(socketInfo, packageInfo, cb) {
     rootPath: config.uploadPath,
     storagePath: packageInfo.relativePath,
     size: file.size,
-    contentType: mime.getType(path.extname(file.name))
+    contentType: mime.getType(path.extname(file.name)),
   }, (err, r) => {
     cb && cb(err, r);
   });
-
 };
 
-api.update = function(socketInfo, status, info, callbackResult, cb) {
-  if(!callbackResult) {
+api.update = function (socketInfo, status, info, callbackResult, cb) {
+  if (!callbackResult) {
     return cb && cb('the callbackResult not return from create interface');
   }
 
   const workflowInfo = callbackResult.workflowInfo;
 
-  if(!workflowInfo) {
+  if (!workflowInfo) {
     return cb && cb('the callbackResult was not include workflow info');
   }
 
   const postData = {
-    workflowId: workflowInfo._id
+    workflowId: workflowInfo._id,
   };
 
-  if(status) {
+  if (status) {
     postData.status = getStatus(status);
   }
 
-  if(info.progress) {
+  if (info.progress) {
     postData.progress = info.progress;
   }
 
-  if(info.speed) {
+  if (info.speed) {
     postData.speed = info.speed;
   }
 
-  if(info.receiveSize) {
+  if (info.receiveSize) {
     postData.receiveSize = info.receiveSize;
   }
 
-  if(info.totalSize) {
+  if (info.totalSize) {
     postData.totalSize = info.totalSize;
   }
 
-  if(info.message) {
+  if (info.message) {
     postData.message = info.message;
   }
 
