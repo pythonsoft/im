@@ -311,7 +311,7 @@ class FileIO {
       });
 
       socket.on('stop', (data) => {
-        updateStatus(socket, STATUS.STOP);
+        updateStatus(socket, STATUS.stop);
 
       });
 
@@ -359,14 +359,14 @@ class FileIO {
                   receiveSize: passedLength,
                   totalSize,
                 };
-                factoryInterface(socket.info.key).update(socket.info, STATUS.SUCCESS, postData, socket.callbackResult, (err) => {
+                factoryInterface(socket.info.key).update(socket.info, STATUS.success, postData, socket.callbackResult, (err) => {
                   if (err) {
                     console.log('update error 2 -->', err);
                     socket.emit('transfer_error', err);
                     socket.disconnect();
                   } else {
                     const task = socket.task;
-                    task.status = STATUS.SUCCESS;
+                    task.status = STATUS.success;
                     socket.emit('complete', socket.callbackResult);
                     socket.disconnect();
                   }
