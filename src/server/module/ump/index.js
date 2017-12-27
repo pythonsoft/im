@@ -5,7 +5,6 @@ const path = require('path');
 
 const api = {};
 
-
 api.create = function (socketInfo, packageInfo, cb) {
   const data = packageInfo.data;
   let url = `${config.callbackAPIHOST.ump}/manuscript/createWebSocketTask`;

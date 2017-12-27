@@ -313,10 +313,10 @@ class FileIO {
 
       socket.on('stop', (data) => {
         updateStatus(socket, STATUS.stop);
-
       });
 
       socket.on('restart', () => {
+        updateStatus(socket, STATUS.transfer);
         socket.emit('transfer_package_finish', '');
       });
 
@@ -426,7 +426,6 @@ class FileIO {
                 };
                 factoryInterface(socket.info.key).update(socket.info, STATUS.success, postData, socket.callbackResult, (err) => {
                   if (err) {
-                    console.log('update error 2 -->', err);
                     socket.emit('transfer_error', err);
                     socket.disconnect();
                   } else {
