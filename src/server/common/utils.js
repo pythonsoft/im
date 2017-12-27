@@ -465,7 +465,7 @@ utils.formatSize = function (size, isNeedUnit) {
   let str = '';
   let unit = 'B';
   if (size < 1000) {
-    str = size;
+    str = Math.round(size);
   } else if (size < 1000 * 1000) {
     str = Math.round(100 * (size / 1024)) / 100;
     unit = 'KB';

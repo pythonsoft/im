@@ -177,6 +177,7 @@ class FileIO {
 
     fileIO.on('connection', (socket) => {
       utils.console('file connection', socket.id);
+      socket.emit('connected', 'ok');
 
       let passedLength = 0;
       let isConnect = true;
@@ -319,6 +320,71 @@ class FileIO {
         socket.emit('transfer_package_finish', '');
       });
 
+      socket.on('fileBuffer', (buffer, data)=>{
+        const task = socket.task;
+
+        if (!task) {
+          invalidRequest(socket, 'file stream accept data invalid.');
+        }
+
+        const filename = path.join(task.targetDir, data._id);
+        const writeStream = fs.createWriteStream(filename);
+        writeStream.write(buffer);
+        writeStream.on('finish', () => {
+          if (data.status === STATUS.error) {
+            fs.unlinkSync(filename);
+            updateStatus(socket, STATUS.error, data.error);
+            socket.emit('transfer_package_error', data);
+            return false;
+          }
+
+          passedLength += data.size;
+          socket.task.acceptPackagePart[data._id] = data;
+
+          socket.emit('transfer_package_success', data);
+          socket.emit('transfer_package_finish', data);
+
+          if (isGetAllPackage(socket.task)) {
+            // get all package and compose file
+
+            utils.console('compose file');
+            composeFile(socket, () => {
+              removePackageParts(socket, () => {
+                const totalSize = socket.task.data.size;
+                const totalTime = Date.now() - transferStartTime;
+                const speed = totalTime ? `${utils.formatSize(totalSize * 1000 / totalTime)}/s` : '';
+                const postData = {
+                  progress: '100',
+                  speed,
+                  receiveSize: passedLength,
+                  totalSize,
+                };
+                factoryInterface(socket.info.key).update(socket.info, STATUS.success, postData, socket.callbackResult, (err) => {
+                  if (err) {
+                    console.log('update error 2 -->', err);
+                    socket.emit('transfer_error', err);
+                    socket.disconnect();
+                  } else {
+                    const task = socket.task;
+                    task.status = STATUS.success;
+                    socket.emit('complete', socket.callbackResult);
+                    socket.disconnect();
+                  }
+                });
+              });
+            });
+          }
+        });
+
+        writeStream.on('error', (err) => {
+          data.status = STATUS.error;
+          data.error = err;
+          // updateStatus(socket, STATUS.error, err, socket.info.queueName, data);
+          updateStatus(socket, STATUS.error, err);
+        });
+        writeStream.end();
+      })
+
       socketStream(socket).on('fileStream', (stream, data) => {
         const task = socket.task;
 
@@ -330,7 +396,6 @@ class FileIO {
         const writeStream = fs.createWriteStream(filename);
 
         // updateStatus(socket, STATUS.transfer);
-
         writeStream.on('finish', () => {
           if (data.status === STATUS.error) {
             fs.unlinkSync(filename);
